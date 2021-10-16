@@ -88,7 +88,8 @@ public class RskService implements CommandLineRunner {
     private long getTransactionConfirmations(Transaction trx) {
         try {
             long currentBlockNumber = web3j.ethBlockNumber().send().getBlockNumber().longValue();
-            long numberOfConfirmations = trx.getBlockNumber() == null ? 0 : currentBlockNumber - trx.getBlockNumber().longValue();
+
+            long numberOfConfirmations = trx.getBlockNumberRaw() == null ? 0 : currentBlockNumber - trx.getBlockNumber().longValue();
             log.info("Number of confirmations: {}", numberOfConfirmations);
             return numberOfConfirmations;
         } catch (IOException e) {
@@ -100,6 +101,7 @@ public class RskService implements CommandLineRunner {
     private void sendToBTCSwapContract(Transaction tx) {
         Credentials credentials = Credentials.create(rskPrivateKey);
         try {
+            log.info("Sending funds to BTCSwapContract: {}", rskBridgeAddress);
             TransactionReceipt transactionReceipt = Transfer.sendFunds(
                     web3j, credentials, rskBridgeAddress,
                     BigDecimal.valueOf(tx.getValue().longValue()), Convert.Unit.ETHER).send();
