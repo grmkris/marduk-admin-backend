@@ -7,9 +7,11 @@ import org.springframework.stereotype.Component;
 import wf.bitcoin.javabitcoindrpcclient.BitcoinJSONRPCClient;
 import wf.bitcoin.javabitcoindrpcclient.BitcoindRpcClient;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Component
 @Slf4j
@@ -24,6 +26,9 @@ public class BtcService implements CommandLineRunner {
     @Value("${btc.rpc.cookie}")
     private String btcRpcCookie;
 
+    private BitcoindRpcClient bitcoindRpcClient;
+    List<BitcoindRpcClient.Transaction> transactionList;
+
     @Override
     public void run(String... args) throws MalformedURLException {
         URL url;
@@ -32,13 +37,31 @@ public class BtcService implements CommandLineRunner {
         } else {
             url = new URL("http://" + btcRpcCookie + "@" + btcServiceUrl.substring(7));
         }
-        BitcoindRpcClient bitcoindRpcClient = new BitcoinJSONRPCClient(url);
+        bitcoindRpcClient = new BitcoinJSONRPCClient(url);
         bitcoindRpcClient.importPrivKey(btcPrivateKey, "testing_wallet");
-        var transactionList = bitcoindRpcClient.listTransactions("testing_wallet");
-        log.info(transactionList.toString());
+        startNewTransactionProber();
+
     }
 
-    private void startNewTransactionListener(){
+    private void startNewTransactionProber(){
+        log.info("Start probing for new transaction every 10 seconds");
+        transactionList = getTransactions();
+        TimerTask newTransactionProber = new TimerTask() {
+            public void run() {
+                var newTransactionList = getTransactions();
+                if (transactionList.size() < newTransactionList.size()){
+                    log.info("New bitcoin transaction");
+                    transactionList = newTransactionList;
+                }
+            }
+        };
+        Timer timer = new Timer("Timer");
+        timer.scheduleAtFixedRate(newTransactionProber, 10000L, 10000L);
+    }
 
+    private List<BitcoindRpcClient.Transaction> getTransactions(){
+        var transactionList = bitcoindRpcClient.listTransactions("testing_wallet");
+        log.info(transactionList.toString());
+        return transactionList;
     }
 }
