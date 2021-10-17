@@ -5,3 +5,6 @@
 - https://www.baeldung.com/web3j
 ## BTC
 - https://bitcoinj.org/working-with-the-wallet#learning-about-changes
+- https://bitcoin.stackexchange.com/questions/70063/how-do-i-parse-the-zeromq-messages-in-java
+
+- cookie path `/root/.bitcoin/regtest/.cookie`

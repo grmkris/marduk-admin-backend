@@ -56,6 +56,13 @@
             <artifactId>core</artifactId>
             <version>3.3.1</version>
         </dependency>
+        <!-- https://github.com/Polve/bitcoin-rpc-client -->
+        <dependency>
+            <groupId>wf.bitcoin</groupId>
+            <artifactId>bitcoin-rpc-client</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
