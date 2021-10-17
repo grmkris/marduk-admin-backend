@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import wf.bitcoin.javabitcoindrpcclient.BitcoinJSONRPCClient;
 import wf.bitcoin.javabitcoindrpcclient.BitcoindRpcClient;
 
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -25,6 +27,9 @@ public class BtcService implements CommandLineRunner {
 
     @Value("${btc.rpc.cookie}")
     private String btcRpcCookie;
+
+    @Value("{lnd.public.address}")
+    private String lightningAddress;
 
     private BitcoindRpcClient bitcoindRpcClient;
     List<BitcoindRpcClient.Transaction> transactionList;
@@ -51,6 +56,7 @@ public class BtcService implements CommandLineRunner {
                 var newTransactionList = getTransactions();
                 if (transactionList.size() < newTransactionList.size()){
                     log.info("New bitcoin transaction");
+                    sendToLightningNode(CollectionUtils.lastElement(newTransactionList).amount());
                     transactionList = newTransactionList;
                 }
             }
@@ -63,5 +69,9 @@ public class BtcService implements CommandLineRunner {
         var transactionList = bitcoindRpcClient.listTransactions("testing_wallet");
         log.info(transactionList.toString());
         return transactionList;
+    }
+
+    private void sendToLightningNode(BigDecimal amount){
+        bitcoindRpcClient.sendToAddress(lightningAddress, amount);
     }
 }
