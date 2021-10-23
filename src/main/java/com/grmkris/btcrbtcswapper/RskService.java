@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 
 @Component
 @Slf4j
-public class RskService implements CommandLineRunner {
+public class RskService {
     @Value("${rsk.service.url}")
     private String serverurl;
 
@@ -41,8 +41,8 @@ public class RskService implements CommandLineRunner {
         web3j = Web3j.build(new HttpService(serverurl));  //web3j  object after connecting with server for transaction
     }
 
-    @Override
     public void run(String... args) throws Exception {
+        log.info("Starting rsk service");
         getBlockSize();
         startNewTransactionListener();
     }

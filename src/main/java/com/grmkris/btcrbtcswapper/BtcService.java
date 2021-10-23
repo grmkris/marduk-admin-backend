@@ -17,7 +17,7 @@ import java.util.TimerTask;
 
 @Component
 @Slf4j
-public class BtcService implements CommandLineRunner {
+public class BtcService {
 
     @Value("${btc.private.key}")
     private String btcPrivateKey;
@@ -34,16 +34,15 @@ public class BtcService implements CommandLineRunner {
     private BitcoindRpcClient bitcoindRpcClient;
     List<BitcoindRpcClient.Transaction> transactionList;
 
-    @Override
     public void run(String... args) throws MalformedURLException {
         URL url;
         if (btcServiceUrl.contains("https")) {
             url = new URL("https://" + btcRpcCookie + "@" + btcServiceUrl.substring(8));
         } else {
-            url = new URL("http://" + btcRpcCookie + "@" + btcServiceUrl.substring(7));
+            url = new URL("http://" + btcRpcCookie + "@" + btcServiceUrl);
         }
         bitcoindRpcClient = new BitcoinJSONRPCClient(url);
-        bitcoindRpcClient.importPrivKey(btcPrivateKey, "testing_wallet");
+        //bitcoindRpcClient.importPrivKey(btcPrivateKey, "testing_wallet");
         startNewTransactionProber();
 
     }
@@ -72,6 +71,7 @@ public class BtcService implements CommandLineRunner {
     }
 
     private void sendToLightningNode(BigDecimal amount){
+        // todo get lightning address from lndservice.getOnChainAddress
         bitcoindRpcClient.sendToAddress(lightningAddress, amount);
     }
 }
