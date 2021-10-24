@@ -25,10 +25,10 @@ public class RskService {
     @Value("${rsk.service.url}")
     private String serverurl;
 
-    @Value("${rsk.public.address}")
+    @Value("${rsk.wallet.public.key}")
     private String swapperRskAddress;
 
-    @Value("${rsk.private.key}")
+    @Value("${rsk.wallet.private.key}")
     private String rskPrivateKey;
 
     @Value("${rsk.bridge.address}")

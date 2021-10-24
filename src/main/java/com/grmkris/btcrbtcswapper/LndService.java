@@ -32,7 +32,7 @@ public class LndService {
 
     @Value("${lnd.loop.admin.macaroon}")
     private String lndAdminMacaroon;
-    @Value("${lnd.loop.rest}")
+    @Value("${lnd.loop.url}")
     private String loopRestEndpoint;
     private WebClient webClient;
 

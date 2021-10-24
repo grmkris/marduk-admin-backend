@@ -19,7 +19,7 @@ import java.util.TimerTask;
 @Slf4j
 public class BtcService {
 
-    @Value("${btc.private.key}")
+    @Value("${btc.wallet.private.key}")
     private String btcPrivateKey;
 
     @Value("${btc.service.url}")
@@ -28,7 +28,7 @@ public class BtcService {
     @Value("${btc.rpc.cookie}")
     private String btcRpcCookie;
 
-    @Value("{lnd.public.address}")
+    @Value("{lnd.wallet.address}")
     private String lightningAddress;
 
     private BitcoindRpcClient bitcoindRpcClient;
