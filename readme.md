@@ -19,12 +19,7 @@ It uses lightning loop service to do either:
      5. this service sends coins from "rsk-paired" wallet to RSK-Federation address
      6. after 100 confirmations funds are available in RSK wallet
 
-This service requires access to the following information:  
- - RSK wallet private key
- - RSK-paired bitcoin private key 
-   - https://github.com/rsksmart/utils
-   - https://developers.rsk.co/rsk/rbtc/conversion/networks/mainnet/
- - Lightning loop client macaroon
+### This service requires access to the following information:
 
 ```properties
 # RSK NODE URL FOR MONITORING RSK CHAIN AND SENDING TRANSACTIONS
