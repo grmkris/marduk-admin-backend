@@ -4,7 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
@@ -14,6 +17,7 @@ import org.web3j.utils.Convert;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
@@ -29,15 +33,24 @@ public class RskService {
 
     @Value("${rsk.wallet.private.key}")
     private String rskPrivateKey;
+    private String rskPublicKey;
 
     @Value("${rsk.bridge.address}")
     private String rskBridgeAddress;
 
     private Web3j web3j;
+    private Credentials credentials;
 
     @PostConstruct
     void init() {
         web3j = Web3j.build(new HttpService(serverurl));  //web3j  object after connecting with server for transaction
+        credentials = Credentials.create(rskPrivateKey);
+
+        String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
+        String publicKey = credentials.getEcKeyPair().getPublicKey().toString(16);
+        String addr = credentials.getAddress();
+
+        rskPublicKey = addr;
     }
 
     public void run(String... args) throws Exception {
@@ -98,7 +111,6 @@ public class RskService {
     }
 
     private void sendToBTCSwapContract(Transaction tx) {
-        Credentials credentials = Credentials.create(rskPrivateKey);
         try {
             log.info("Sending funds to BTCSwapContract: {}", rskBridgeAddress);
             TransactionReceipt transactionReceipt = Transfer.sendFunds(
@@ -110,4 +122,16 @@ public class RskService {
         }
     }
 
+    public BigInteger getRskBalance() {
+        EthGetBalance balanceWei = null;
+        try {
+            log.info("Retrieving rsk balance");
+            balanceWei = web3j.ethGetBalance(rskPublicKey, DefaultBlockParameterName.LATEST).send();
+        } catch (IOException e) {
+            log.error("Error retrieving rsk balance");
+        }
+        BigDecimal balance = Convert.fromWei(balanceWei.getBalance().toString(), Convert.Unit.GWEI).divide(BigDecimal.TEN);
+        log.info("rsk balance: " + balance);
+        return balance.toBigInteger();
+    }
 }
