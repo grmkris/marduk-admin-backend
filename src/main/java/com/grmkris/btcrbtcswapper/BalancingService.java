@@ -34,12 +34,16 @@ public class BalancingService {
         BigDecimal lndAmount = new BigDecimal(lndService.getLightningBalance());
         BigDecimal rskAmount = new BigDecimal(rskService.getRskBalance());
 
+        startLoopInProcess(BigDecimal.valueOf(10000L));
+        // TODO parameterize ratio for balancing
         if (lndAmount.compareTo(rskAmount) < 0){
-            if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.3)) == -1){
+            if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
+                BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(lndAmount);
                 log.info("Lightning balance below 30%, initiating loop in");
+                startLoopInProcess(loopAmount);
             }
         } else if (lndAmount.compareTo(rskAmount) > 0) {
-            if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.3)) == -1){
+            if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
                 // Calulating amount to loopout:
                 // (lndAmount + rskAmount) / 2 - rskAmount
                 BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
@@ -49,5 +53,23 @@ public class BalancingService {
         } else {
             log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
         }
+    }
+
+    /* when loopin is initiated this service should:
+    1.  Transfer funds from rbtc wallet to RSK contract "rsk paired bitcoin wallet"
+    2.  Monitor "rsk paired bitcoin wallet" for new transactions from RSK contract
+    3.  When new transaction arrives it should send new transaction to lightning wallet by calling lndservice.getnewOnchainaddress
+    4.  It should monitor lnd for new transactions and once it is confirmed it should initiate a loopin
+    5. it shoudl monitor the loopin swap to see if it was sucesfull
+    */
+    private void startLoopInProcess(BigDecimal loopAmount){
+        rskService.sendToBTCSwapContract(loopAmount);
+    }
+
+    /*
+    https://developers.rsk.co/rsk/rbtc/conversion/networks/testnet/
+     */
+    private void startLoopOutProcess(){
+
     }
 }

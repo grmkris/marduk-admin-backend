@@ -4,15 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.web3j.crypto.Credentials;
-import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.EthGetBalance;
-import org.web3j.protocol.core.methods.response.Transaction;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.Contract;
+import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.Transfer;
 import org.web3j.utils.Convert;
+import org.web3j.utils.Numeric;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -72,7 +74,7 @@ public class RskService {
                 log.info("Found transaction from: {}", tx.getFrom());
                 confirmTransaction(tx);
                 log.info("Transaction confirmed");
-                sendToBTCSwapContract(tx);
+                //sendToBTCSwapContract(tx.getValue().longValue());
             }
         });
     }
@@ -110,13 +112,16 @@ public class RskService {
         return 0;
     }
 
-    private void sendToBTCSwapContract(Transaction tx) {
+    public void sendToBTCSwapContract(BigDecimal amount) {
         try {
             log.info("Sending funds to BTCSwapContract: {}", rskBridgeAddress);
+            this.getBlockSize();
+
             TransactionReceipt transactionReceipt = Transfer.sendFunds(
                     web3j, credentials, rskBridgeAddress,
-                    BigDecimal.valueOf(tx.getValue().longValue()), Convert.Unit.ETHER).send();
-            log.info("Sent funds to BTCSwapContract: {}, transaction hash: {}", transactionReceipt.getTo(), transactionReceipt.getTransactionHash());
+                    BigDecimal.valueOf(1.0), Convert.Unit.GWEI).send();
+
+            log.info("Sent funds to BTCSwapContract: {}, transaction hash: {}", rskBridgeAddress, transactionReceipt.getTransactionHash());
         } catch (Exception e) {
             log.error("Error while sending funds to BTCSwapContract", e);
         }
