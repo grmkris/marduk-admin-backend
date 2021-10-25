@@ -6,6 +6,8 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
@@ -25,9 +27,15 @@ import java.util.Map;
 public class LndService {
 
     @Value("${lnd.loop.admin.macaroon}")
-    private String lndAdminMacaroon;
+    private String loopAdminMacaroon;
     @Value("${lnd.loop.url}")
     private String loopRestEndpoint;
+
+    @Value("${lnd.admin.macaroon}")
+    private String lndAdminMacaroon;
+    @Value("${lnd.url}")
+    private String lndRestEndpoint;
+
     private WebClient webClient;
 
     public LndService() throws SSLException {
@@ -57,7 +65,7 @@ public class LndService {
 
         String responseBody = webClient.post()
                 .uri(loopRestEndpoint+ "/v1/loop/in")
-                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .header("Grpc-Metadata-macaroon", loopAdminMacaroon)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBodyMap), Map.class)
                 .exchangeToMono(response ->
@@ -78,7 +86,7 @@ public class LndService {
 
         String responseBody = webClient.post()
                 .uri(loopRestEndpoint+ "/v1/loop/out")
-                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .header("Grpc-Metadata-macaroon", loopAdminMacaroon)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBodyMap), Map.class)
                 .exchangeToMono(response ->
@@ -94,4 +102,24 @@ public class LndService {
         return null;
     }
 
+
+    public BigInteger getLightningBalance() {
+        log.info("Retrieving lightning balance");
+        String responseBody = webClient.get()
+                .uri(lndRestEndpoint+ "/v1/balance/channels")
+                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+        String localbalance = "0";
+        try {
+            JSONObject jsonObject = new JSONObject(responseBody);
+            localbalance = jsonObject.getJSONObject("local_balance").getString("sat");
+        } catch (JSONException e) {
+            log.error("Error parsing lnd api /v1/balance/channels");
+        }
+        log.info("Lightning balance: {}", localbalance);
+        return BigInteger.valueOf(Long.parseLong(localbalance));
+    }
 }
