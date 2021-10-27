@@ -4,6 +4,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -23,7 +24,7 @@ import java.util.*;
 
 @Component
 @Slf4j
-public class LndService {
+public class LndHandler {
 
     @Value("${lnd.loop.admin.macaroon}")
     private String loopAdminMacaroon;
@@ -34,11 +35,15 @@ public class LndService {
     private String lndAdminMacaroon;
     @Value("${lnd.url}")
     private String lndRestEndpoint;
+
+    private final BalanceStatus balanceStatus;
+
     private WebClient webClient;
 
     private BigInteger lndOnchainWalletBalance;
 
-    public LndService() throws SSLException {
+    public LndHandler(BalanceStatus balanceStatus) throws SSLException {
+        this.balanceStatus = balanceStatus;
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
@@ -50,29 +55,7 @@ public class LndService {
         ).clientConnector(new ReactorClientHttpConnector(httpClient)).build();
     }
 
-    public void run(String... args) throws Exception {
-        log.info("Starting lnd service");
-        lndWalletBalanceChecker();
-    }
-
-    // periodically check lightning wallet balance, if it increases send the dela amount through loopin
-    public void lndWalletBalanceChecker(){
-        log.info("Start probing for new lightning transaction every 1000 seconds");
-        lndOnchainWalletBalance = this.getLightningOnChainBalance();
-        TimerTask newTransactionProber = new TimerTask() {
-            public void run() {
-                var newlndWalletBalance = getLightningOnChainBalance();
-                if (newlndWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
-                    initiateLoopIn(newlndWalletBalance.subtract(lndOnchainWalletBalance));
-                }
-            }
-        };
-        Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(newTransactionProber, 10000L, 10000L);
-
-    }
-
-    private BigInteger getLightningOnChainBalance() {
+    public BigInteger getLightningOnChainBalance() {
         log.info("Retrieving lightning onchain balance");
         String responseBody = webClient.get()
                 .uri(lndRestEndpoint+ "/v1/balance/blockchain")
@@ -108,12 +91,14 @@ public class LndService {
                                 .map(stringBody -> stringBody)
                 ).block();
 
-        log.info("Sent loop in request:");
-        log.info(responseBody);
+        log.info("Sent loop in request through LND: {}", responseBody);
+        // loopin is last step of the swap, so we put service back to idle
+        balanceStatus.setBalancingStatus("idle");
     }
 
-    public void initiateLoopOut(BigInteger value){
+    public void initiateLoopOut(BigInteger value, String destination){
         Map<String, String> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("dest", destination);
         requestBodyMap.put("amt", value.toString());
         requestBodyMap.put("max_swap_fee", "500"); // TODO parameterize this
         requestBodyMap.put("max_swap_routing_fee", "500");
@@ -128,7 +113,7 @@ public class LndService {
                         response.bodyToMono(String.class)
                                 .map(stringBody -> stringBody)
                 ).block();
-        log.info("Sent loop out request:");
+        log.info("Sent loop out request through LND: {}", responseBody);
         log.info(responseBody);
     }
 

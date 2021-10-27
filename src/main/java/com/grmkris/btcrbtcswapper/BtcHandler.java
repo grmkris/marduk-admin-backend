@@ -1,6 +1,5 @@
 package com.grmkris.btcrbtcswapper;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,8 +7,8 @@ import org.springframework.stereotype.Component;
 import wf.bitcoin.javabitcoindrpcclient.BitcoinJSONRPCClient;
 import wf.bitcoin.javabitcoindrpcclient.BitcoindRpcClient;
 
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.TimerTask;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class BtcService {
+public class BtcHandler {
 
     @Value("${btc.wallet.private.key}")
     private String btcPrivateKey;
@@ -31,12 +30,13 @@ public class BtcService {
     private String btcRpcCookie;
 
     private BitcoindRpcClient bitcoindRpcClient;
-    private final LndService lndService;
-    private BigDecimal btcWalletBalance;
-    private final BalancingService balancingService;
-    private final RskService rskService;
+    private final LndHandler lndHandler;
+    private final RskHandler rskHandler;
+    private final BalanceStatus balanceStatus;
 
-    public void run(String... args) throws MalformedURLException {
+    @PostConstruct
+    public void init() throws MalformedURLException {
+        //bitcoindRpcClient.importPrivKey(btcPrivateKey, "boltz-testnet-btc-wallet");
         URL url;
         if (btcServiceUrl.contains("https")) {
             url = new URL("https://" + btcRpcCookie + "@" + btcServiceUrl.substring(8));
@@ -44,31 +44,9 @@ public class BtcService {
             url = new URL("http://" + btcRpcCookie + "@" + btcServiceUrl);
         }
         bitcoindRpcClient = new BitcoinJSONRPCClient(url);
-        //bitcoindRpcClient.importPrivKey(btcPrivateKey, "boltz-testnet-btc-wallet");
-        startNewTransactionProber();
-
     }
 
-    public void startNewTransactionProber(){
-        log.info("Start probing for Bitcoin new transaction every 10 seconds");
-        btcWalletBalance = this.getBtwWalletBalance();
-        TimerTask newTransactionProber = new TimerTask() {
-            public void run() {
-                var newBtcWalletBalance = getBtwWalletBalance();
-                if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
-                    if (balancingService.getBalancingStatus().equals("loopin")) {
-                        sendToLightningNode(newBtcWalletBalance.subtract(btcWalletBalance));
-                    } else {
-                        sendToBtcRskFederationAddress(newBtcWalletBalance.subtract(btcWalletBalance));
-                    }
-                }
-            }
-        };
-        Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(newTransactionProber, 10000L, 10000L);
-    }
-
-    private BigDecimal getBtwWalletBalance() {
+    public BigDecimal getBtcWalletBalance() {
         // TODO parameterize walletname
         log.info("Retrieving BTC onchain balance");
         var confirmedBalance = bitcoindRpcClient.getBalance();
@@ -76,9 +54,11 @@ public class BtcService {
         return confirmedBalance;
     }
 
-    private void sendToBtcRskFederationAddress(BigDecimal amount) {
-        String rskFederationAddress = rskService.retrieveRskFederationBtcAddress();
+    public void sendToBtcRskFederationAddress(BigDecimal amount) {
+        String rskFederationAddress = rskHandler.retrieveRskFederationBtcAddress();
         bitcoindRpcClient.sendToAddress(rskFederationAddress, amount);
+        // since this is last step of the loop out process we put service back to idle
+        balanceStatus.setBalancingStatus("idle");
         // https://developers.rsk.co/rsk/rbtc/conversion/networks/mainnet/
     }
 
@@ -88,8 +68,8 @@ public class BtcService {
         return transactionList;
     }
 
-    private void sendToLightningNode(BigDecimal amount){
-        String onchainLightningAddress = lndService.getNewOnChainAddress();
+    public void sendToLightningNode(BigDecimal amount){
+        String onchainLightningAddress = lndHandler.getNewOnChainAddress();
         bitcoindRpcClient.sendToAddress(onchainLightningAddress, amount);
     }
 

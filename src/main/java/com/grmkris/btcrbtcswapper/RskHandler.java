@@ -1,9 +1,9 @@
 package com.grmkris.btcrbtcswapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Function;
@@ -30,7 +30,8 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Slf4j
-public class RskService {
+@RequiredArgsConstructor
+public class RskHandler {
     @Value("${rsk.service.url}")
     private String serverurl;
 
@@ -45,6 +46,8 @@ public class RskService {
 
     private Web3j web3j;
     private Credentials credentials;
+    private final BalanceStatus balanceStatus;
+
 
     @PostConstruct
     void init() {
@@ -54,13 +57,12 @@ public class RskService {
         String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
         String publicKey = credentials.getEcKeyPair().getPublicKey().toString(16);
         String addr = credentials.getAddress();
-
         rskPublicKey = addr;
     }
 
     public void run(String... args) throws Exception {
         log.info("Starting rsk service");
-        startNewTransactionListener();
+        // startNewTransactionListener();
     }
 
     private void getBlockSize() throws IOException {
@@ -76,10 +78,17 @@ public class RskService {
                 log.info("Found transaction from: {}", tx.getFrom());
                 confirmTransaction(tx);
                 log.info("Transaction confirmed");
-                //sendToBTCSwapContract(tx.getValue().longValue());
+                if (balanceStatus.getBalancingStatus().equals("loopin")){
+                    log.info("Received transaction to RSK wallet while loopin");
+                } else if (balanceStatus.getBalancingStatus().equals("loopout")) {
+                    log.info("Received transaction to RSK wallet while loopout");
+                } else {
+                    log.info("Received transaction to RSK wallet while idling");
+                }
             }
         });
     }
+
     private void confirmTransaction(Transaction trx) {
         log.info("Waiting for transaction to confirm");
         final CountDownLatch latch = new CountDownLatch(1);
@@ -114,11 +123,9 @@ public class RskService {
         return 0;
     }
 
-    public TransactionReceipt sendToBTCSwapContract(BigDecimal amount) {
+    public TransactionReceipt sendToRskBtcBridge(BigDecimal amount) {
         try {
             log.info("Sending funds to BTCSwapContract: {}", rskBridgeAddress);
-            this.getBlockSize();
-
             TransactionReceipt transactionReceipt = Transfer.sendFunds(
                     web3j, credentials, rskBridgeAddress,
                     amount, Convert.Unit.GWEI).send();
@@ -146,29 +153,32 @@ public class RskService {
 
     public String retrieveRskFederationBtcAddress() {
         //http://docs.web3j.io/4.8.7/transactions/transactions_and_smart_contracts/
+        // good example: https://ethereum.stackexchange.com/questions/13387/how-to-query-the-state-of-a-smart-contract-using-web3j-in-android
         List<Type> inputParameters = new ArrayList<>();
         List<TypeReference<?>> outputParameters = Arrays.asList(new TypeReference<Utf8String>() {});
         Function function = new Function("getFederationAddress",
                 inputParameters,
                 outputParameters);
-        String functionEncoder = FunctionEncoder.encode(function);
         EthCall response = null;
         try {
+            // https://mycrypto.testnet.rsk.co/
+            // DATA FIELD 0x6923fa85 CAN BE FOUND on https://app.mycrypto.com/interact-with-contracts
+            // interact with smart contract and check the request
             response = web3j.ethCall(
                     org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
-                            rskPublicKey, "0x0000000000000000000000000000000001000006", "hello"),
+                            rskPublicKey, "0x0000000000000000000000000000000001000006", "0x6923fa85"),
                             DefaultBlockParameterName.LATEST
                     ).sendAsync().get();
-        } catch (InterruptedException e) {
+
+            List<Type> someType = FunctionReturnDecoder.decode(response.getValue(),function.getOutputParameters());
+            Iterator<Type> it = someType.iterator();
+            Type result = someType.get(0);
+            String a = result.toString();
+            log.info("RSK FEDERATION BITCOIN ADDRESS: {}", a);
+            return a;
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error retrieving RSK FEDERATION BITCOIN ADDRESS");
         }
-        List<Type> someType = FunctionReturnDecoder.decode(response.getValue(),function.getOutputParameters());
-        Iterator<Type> it = someType.iterator();
-        Type resault = someType.get(0);
-        String a = resault.toString();
-        log.info("RSK FEDERATION ADDRESS: {}", a);
-        return a;
     }
 }

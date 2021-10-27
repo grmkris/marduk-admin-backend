@@ -2,6 +2,7 @@ package com.grmkris.btcrbtcswapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -12,14 +13,16 @@ import java.util.TimerTask;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class BalancingService {
+public class BalanceCoordinator {
 
-    private final LndService lndService;
-    private final RskService rskService;
+    @Value("${btc.wallet.private.key}")
+    private String btcPublicKey;
 
-    private String balancingStatus = "idle"; // idle, loopin, loopout
+    private final LndHandler lndHandler;
+    private final RskHandler rskHandler;
+    private final BalanceStatus balanceStatus;
 
-    public void startBalanceChecker(){
+    public void startBalanceChecker() throws Exception {
         log.info("Starting balance checker and checking every 1000 seconds");
         TimerTask newTransactionProber = new TimerTask() {
             @Override
@@ -32,10 +35,10 @@ public class BalancingService {
     }
 
     private void balanceChecker(){
-        if (balancingStatus.equals("idle")) {
-            log.info("Checking balance");
-            BigDecimal lndAmount = new BigDecimal(lndService.getLightningBalance());
-            BigDecimal rskAmount = new BigDecimal(rskService.getRskBalance());
+        if (balanceStatus.getBalancingStatus().equals("idle")) {
+            log.info("Balance coordinator: Checking balance");
+            BigDecimal lndAmount = new BigDecimal(lndHandler.getLightningBalance());
+            BigDecimal rskAmount = new BigDecimal(rskHandler.getRskBalance());
 
             // TODO parameterize ratio for balancing
             if (lndAmount.compareTo(rskAmount) < 0){
@@ -44,19 +47,23 @@ public class BalancingService {
                     log.info("Lightning balance below 30%, initiating loop in, amount: {} sats", loopAmount);
                     startLoopInProcess(loopAmount);
                 }
+                else {
+                    log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
+                }
             } else if (lndAmount.compareTo(rskAmount) > 0) {
                 if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
                     BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
                     log.info("RSK balance below 30%, initiating loop out, amount: {} sats", loopAmount);
-                    //lndService.initiateLoopOut(loopAmount.unscaledValue());
+                    startLoopOutProcess(loopAmount);
                 }
-            } else {
-                log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
+                else {
+                    log.info("No need for balancing, lnd balance: {}, rsk balance: {} ", lndAmount, rskAmount);
+                }
             }
         } else {
-            log.info("Balancing status: " + balancingStatus);
+            log.info("Balancing status: " + balanceStatus.getBalancingStatus());
         }
 
     }
@@ -69,24 +76,16 @@ public class BalancingService {
     5. it shoudl monitor the loopin swap to see if it was sucesfull
     */
     private void startLoopInProcess(BigDecimal loopAmount){
-         // TODO UNCOMMENT WHEN DONE WITH BItCOIN SIDE
-        // rskService.sendToBTCSwapContract(loopAmount.multiply(BigDecimal.TEN));
-        balancingStatus = "loopin";
+        balanceStatus.setBalancingStatus("loopin");
+        rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
+
     }
 
     /*
     https://developers.rsk.co/rsk/rbtc/conversion/networks/testnet/
      */
     private void startLoopOutProcess(BigDecimal loopAmount){
-        lndService.initiateLoopOut(loopAmount.toBigInteger());
-        balancingStatus = "loopout";
-    }
-
-    public String getBalancingStatus(){
-        return balancingStatus;
-    }
-
-    public void completeBalancing(){
-        balancingStatus = "idle";
+        balanceStatus.setBalancingStatus("loopout");
+        lndHandler.initiateLoopOut(loopAmount.toBigInteger(), btcPublicKey);
     }
 }

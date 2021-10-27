@@ -9,10 +9,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @AllArgsConstructor
 public class BtcRbtcSwapperApplication implements CommandLineRunner {
 
-    private final BtcService btcService;
-    private final LndService lndService;
-    private final RskService rskService;
-    private final BalancingService balancingService;
+    private final BalanceCoordinator balancingService;
+    private final BlockchainWatcher blockchainWatcher;
 
     public static void main(String[] args) {
         SpringApplication.run(BtcRbtcSwapperApplication.class, args);
@@ -20,11 +18,9 @@ public class BtcRbtcSwapperApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-       // btcService.run();
-       // lndService.run();
-        //rskService.run();
-      //  balancingService.startBalanceChecker();
+        balancingService.startBalanceChecker();
+        blockchainWatcher.startLNDTransactionWatcher();
+        blockchainWatcher.startBTCTransactionWatcher();
 
-        rskService.retrieveRskFederationBtcAddress();
     }
 }
