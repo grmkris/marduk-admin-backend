@@ -4,7 +4,6 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -20,7 +19,9 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 import javax.net.ssl.SSLException;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -114,7 +115,6 @@ public class LndHandler {
                                 .map(stringBody -> stringBody)
                 ).block();
         log.info("Sent loop out request through LND: {}", responseBody);
-        log.info(responseBody);
     }
 
     public String getNewOnChainAddress(){

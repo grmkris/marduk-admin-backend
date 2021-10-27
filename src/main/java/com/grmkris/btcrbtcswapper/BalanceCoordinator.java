@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,7 +16,7 @@ import java.util.TimerTask;
 @Slf4j
 public class BalanceCoordinator {
 
-    @Value("${btc.wallet.private.key}")
+    @Value("${btc.wallet.public.key}")
     private String btcPublicKey;
 
     private final LndHandler lndHandler;
@@ -86,6 +87,9 @@ public class BalanceCoordinator {
      */
     private void startLoopOutProcess(BigDecimal loopAmount){
         balanceStatus.setBalancingStatus("loopout");
+        if (loopAmount.toBigInteger().compareTo(BigInteger.valueOf(1000000L) ) > 0 ){
+            loopAmount = BigDecimal.valueOf(1000000);
+        }
         lndHandler.initiateLoopOut(loopAmount.toBigInteger(), btcPublicKey);
     }
 }
