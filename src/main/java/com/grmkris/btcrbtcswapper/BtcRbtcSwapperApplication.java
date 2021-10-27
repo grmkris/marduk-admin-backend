@@ -20,6 +20,9 @@ public class BtcRbtcSwapperApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        btcService.run();
+        lndService.run();
+        //rskService.run();
         balancingService.startBalanceChecker();
     }
 }

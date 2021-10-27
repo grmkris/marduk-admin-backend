@@ -19,8 +19,7 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 import javax.net.ssl.SSLException;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -35,8 +34,9 @@ public class LndService {
     private String lndAdminMacaroon;
     @Value("${lnd.url}")
     private String lndRestEndpoint;
-
     private WebClient webClient;
+
+    private BigInteger lndOnchainWalletBalance;
 
     public LndService() throws SSLException {
         SslContext sslContext = SslContextBuilder
@@ -52,11 +52,46 @@ public class LndService {
 
     public void run(String... args) throws Exception {
         log.info("Starting lnd service");
-        log.info("Initiating loop in");
-        //this.initiateLoopIn(BigInteger.valueOf(250000L));
-        log.info("Inititaing loop out");
-        this.initiateLoopOut(BigInteger.valueOf(250000L));
+        lndWalletBalanceChecker();
     }
+
+    // periodically check lightning wallet balance, if it increases send the dela amount through loopin
+    public void lndWalletBalanceChecker(){
+        log.info("Start probing for new lightning transaction every 1000 seconds");
+        lndOnchainWalletBalance = this.getLightningOnChainBalance();
+        TimerTask newTransactionProber = new TimerTask() {
+            public void run() {
+                var newlndWalletBalance = getLightningOnChainBalance();
+                if (newlndWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
+                    initiateLoopIn(newlndWalletBalance.subtract(lndOnchainWalletBalance));
+                }
+            }
+        };
+        Timer timer = new Timer("Timer");
+        timer.scheduleAtFixedRate(newTransactionProber, 10000L, 10000L);
+
+    }
+
+    private BigInteger getLightningOnChainBalance() {
+        log.info("Retrieving lightning onchain balance");
+        String responseBody = webClient.get()
+                .uri(lndRestEndpoint+ "/v1/balance/blockchain")
+                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+        String localbalance = "0";
+        try {
+            JSONObject jsonObject = new JSONObject(responseBody);
+            localbalance = jsonObject.getString("confirmed_balance");
+        } catch (JSONException e) {
+            log.error("Error parsing lnd api /v1/balance/channels");
+        }
+        log.info("Retrieved Lightning onchain balance: {}", localbalance);
+        return BigInteger.valueOf(Long.parseLong(localbalance));
+    }
+
 
     public void initiateLoopIn(BigInteger value){
         Map<String, String> requestBodyMap = new HashMap<>();
@@ -98,8 +133,23 @@ public class LndService {
     }
 
     public String getNewOnChainAddress(){
-        // TODO
-        return null;
+        log.info("Getting new onchain address");
+        String responseBody = webClient.get()
+                .uri(lndRestEndpoint+ "/v1/newaddress")
+                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+        String address = "0";
+        try {
+            JSONObject jsonObject = new JSONObject(responseBody);
+            address = jsonObject.getString("address");
+        } catch (JSONException e) {
+            log.error("Error parsing lnd api /v1/balance/channels");
+        }
+        log.info("New onchain Lightning address: {}", address);
+        return address;
     }
 
 
@@ -119,7 +169,11 @@ public class LndService {
         } catch (JSONException e) {
             log.error("Error parsing lnd api /v1/balance/channels");
         }
-        log.info("Lightning balance: {}", localbalance);
+        log.info("Retrieved Lightning balance: {}", localbalance);
         return BigInteger.valueOf(Long.parseLong(localbalance));
+    }
+
+    public List<String> getCurrentLoopOutList(){
+        return this.getCurrentLoopOutList();
     }
 }

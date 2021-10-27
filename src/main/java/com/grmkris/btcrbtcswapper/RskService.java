@@ -57,7 +57,6 @@ public class RskService {
 
     public void run(String... args) throws Exception {
         log.info("Starting rsk service");
-        getBlockSize();
         startNewTransactionListener();
     }
 
@@ -112,18 +111,20 @@ public class RskService {
         return 0;
     }
 
-    public void sendToBTCSwapContract(BigDecimal amount) {
+    public TransactionReceipt sendToBTCSwapContract(BigDecimal amount) {
         try {
             log.info("Sending funds to BTCSwapContract: {}", rskBridgeAddress);
             this.getBlockSize();
 
             TransactionReceipt transactionReceipt = Transfer.sendFunds(
                     web3j, credentials, rskBridgeAddress,
-                    BigDecimal.valueOf(1.0), Convert.Unit.GWEI).send();
+                    amount, Convert.Unit.GWEI).send();
 
             log.info("Sent funds to BTCSwapContract: {}, transaction hash: {}", rskBridgeAddress, transactionReceipt.getTransactionHash());
+            return transactionReceipt;
         } catch (Exception e) {
             log.error("Error while sending funds to BTCSwapContract", e);
+            throw new RuntimeException("Error sending funds to BTCSwapContract", e);
         }
     }
 
@@ -136,7 +137,7 @@ public class RskService {
             log.error("Error retrieving rsk balance");
         }
         BigDecimal balance = Convert.fromWei(balanceWei.getBalance().toString(), Convert.Unit.GWEI).divide(BigDecimal.TEN);
-        log.info("rsk balance: " + balance);
+        log.info("Retrieved rsk balance: " + balance);
         return balance.toBigInteger();
     }
 }
