@@ -1,24 +1,23 @@
 package com.grmkris.btcrbtcswapper;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class BalancingService {
 
-    private LndService lndService;
-    private RskService rskService;
-    private BtcService btcService;
+    private final LndService lndService;
+    private final RskService rskService;
+
+    private String balancingStatus = "idle"; // idle, loopin, loopout
 
     public void startBalanceChecker(){
         log.info("Starting balance checker and checking every 1000 seconds");
@@ -33,28 +32,33 @@ public class BalancingService {
     }
 
     private void balanceChecker(){
-        log.info("Checking balance");
-        BigDecimal lndAmount = new BigDecimal(lndService.getLightningBalance());
-        BigDecimal rskAmount = new BigDecimal(rskService.getRskBalance());
+        if (balancingStatus.equals("idle")) {
+            log.info("Checking balance");
+            BigDecimal lndAmount = new BigDecimal(lndService.getLightningBalance());
+            BigDecimal rskAmount = new BigDecimal(rskService.getRskBalance());
 
-        // TODO parameterize ratio for balancing
-        if (lndAmount.compareTo(rskAmount) < 0){
-            if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
-                BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(lndAmount);
-                log.info("Lightning balance below 30%, initiating loop in, amount: {} sats", loopAmount);
-                startLoopInProcess(loopAmount);
-            }
-        } else if (lndAmount.compareTo(rskAmount) > 0) {
-            if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
-                // Calulating amount to loopout:
-                // (lndAmount + rskAmount) / 2 - rskAmount
-                BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
-                log.info("RSK balance below 30%, initiating loop out, amount: {} sats", loopAmount);
-                //lndService.initiateLoopOut(loopAmount.unscaledValue());
+            // TODO parameterize ratio for balancing
+            if (lndAmount.compareTo(rskAmount) < 0){
+                if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
+                    BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(lndAmount);
+                    log.info("Lightning balance below 30%, initiating loop in, amount: {} sats", loopAmount);
+                    startLoopInProcess(loopAmount);
+                }
+            } else if (lndAmount.compareTo(rskAmount) > 0) {
+                if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
+                    // Calulating amount to loopout:
+                    // (lndAmount + rskAmount) / 2 - rskAmount
+                    BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
+                    log.info("RSK balance below 30%, initiating loop out, amount: {} sats", loopAmount);
+                    //lndService.initiateLoopOut(loopAmount.unscaledValue());
+                }
+            } else {
+                log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
             }
         } else {
-            log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
+            log.info("Balancing status: " + balancingStatus);
         }
+
     }
 
     /* when loopin is initiated this service should:
@@ -67,6 +71,7 @@ public class BalancingService {
     private void startLoopInProcess(BigDecimal loopAmount){
          // TODO UNCOMMENT WHEN DONE WITH BItCOIN SIDE
         // rskService.sendToBTCSwapContract(loopAmount.multiply(BigDecimal.TEN));
+        balancingStatus = "loopin";
     }
 
     /*
@@ -74,5 +79,14 @@ public class BalancingService {
      */
     private void startLoopOutProcess(BigDecimal loopAmount){
         lndService.initiateLoopOut(loopAmount.toBigInteger());
+        balancingStatus = "loopout";
+    }
+
+    public String getBalancingStatus(){
+        return balancingStatus;
+    }
+
+    public void completeBalancing(){
+        balancingStatus = "idle";
     }
 }

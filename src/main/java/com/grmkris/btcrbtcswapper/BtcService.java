@@ -9,6 +9,7 @@ import wf.bitcoin.javabitcoindrpcclient.BitcoinJSONRPCClient;
 import wf.bitcoin.javabitcoindrpcclient.BitcoindRpcClient;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -32,6 +33,8 @@ public class BtcService {
     private BitcoindRpcClient bitcoindRpcClient;
     private final LndService lndService;
     private BigDecimal btcWalletBalance;
+    private final BalancingService balancingService;
+    private final RskService rskService;
 
     public void run(String... args) throws MalformedURLException {
         URL url;
@@ -53,8 +56,11 @@ public class BtcService {
             public void run() {
                 var newBtcWalletBalance = getBtwWalletBalance();
                 if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
-                    sendToLightningNode(newBtcWalletBalance.subtract(btcWalletBalance));
-                    // TOOD logic for doing loopout
+                    if (balancingService.getBalancingStatus().equals("loopin")) {
+                        sendToLightningNode(newBtcWalletBalance.subtract(btcWalletBalance));
+                    } else {
+                        sendToBtcRskFederationAddress(newBtcWalletBalance.subtract(btcWalletBalance));
+                    }
                 }
             }
         };
@@ -70,8 +76,9 @@ public class BtcService {
         return confirmedBalance;
     }
 
-    private void sendToBtcRskFederationAddress(BitcoindRpcClient.Transaction element) {
-        // TODO retrieve rsk federation address from smart contract call
+    private void sendToBtcRskFederationAddress(BigDecimal amount) {
+        String rskFederationAddress = rskService.retrieveRskFederationBtcAddress();
+        bitcoindRpcClient.sendToAddress(rskFederationAddress, amount);
         // https://developers.rsk.co/rsk/rbtc/conversion/networks/mainnet/
     }
 

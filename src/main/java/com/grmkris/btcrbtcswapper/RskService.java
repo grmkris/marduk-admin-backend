@@ -3,26 +3,30 @@ package com.grmkris.btcrbtcswapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.crypto.Credentials;
-import org.web3j.crypto.RawTransaction;
-import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.*;
+import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.Transaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.Contract;
-import org.web3j.tx.ManagedTransaction;
-import org.web3j.tx.Transfer;
+import org.web3j.tx.*;
 import org.web3j.utils.Convert;
-import org.web3j.utils.Numeric;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @Slf4j
@@ -31,11 +35,10 @@ public class RskService {
     private String serverurl;
 
     @Value("${rsk.wallet.public.key}")
-    private String swapperRskAddress;
+    private String rskPublicKey;
 
     @Value("${rsk.wallet.private.key}")
     private String rskPrivateKey;
-    private String rskPublicKey;
 
     @Value("${rsk.bridge.address}")
     private String rskBridgeAddress;
@@ -69,7 +72,7 @@ public class RskService {
             log.info("New transaction arrived to the chain");
             // using equalsIgnoreCase because for some reason the addresses don't match when comparing them without ignoring case
             // probably rsk <> eth compatibilty stuff
-            if (tx.getTo().equalsIgnoreCase(swapperRskAddress)){
+            if (tx.getTo().equalsIgnoreCase(rskPublicKey)){
                 log.info("Found transaction from: {}", tx.getFrom());
                 confirmTransaction(tx);
                 log.info("Transaction confirmed");
@@ -139,5 +142,33 @@ public class RskService {
         BigDecimal balance = Convert.fromWei(balanceWei.getBalance().toString(), Convert.Unit.GWEI).divide(BigDecimal.TEN);
         log.info("Retrieved rsk balance: " + balance);
         return balance.toBigInteger();
+    }
+
+    public String retrieveRskFederationBtcAddress() {
+        //http://docs.web3j.io/4.8.7/transactions/transactions_and_smart_contracts/
+        List<Type> inputParameters = new ArrayList<>();
+        List<TypeReference<?>> outputParameters = Arrays.asList(new TypeReference<Utf8String>() {});
+        Function function = new Function("getFederationAddress",
+                inputParameters,
+                outputParameters);
+        String functionEncoder = FunctionEncoder.encode(function);
+        EthCall response = null;
+        try {
+            response = web3j.ethCall(
+                    org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
+                            rskPublicKey, "0x0000000000000000000000000000000001000006", "hello"),
+                            DefaultBlockParameterName.LATEST
+                    ).sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        List<Type> someType = FunctionReturnDecoder.decode(response.getValue(),function.getOutputParameters());
+        Iterator<Type> it = someType.iterator();
+        Type resault = someType.get(0);
+        String a = resault.toString();
+        log.info("RSK FEDERATION ADDRESS: {}", a);
+        return a;
     }
 }
