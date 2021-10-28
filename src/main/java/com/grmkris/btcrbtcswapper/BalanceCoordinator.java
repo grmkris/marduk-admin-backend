@@ -1,5 +1,8 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.grmkris.btcrbtcswapper.db.BalancingStatus;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +24,15 @@ public class BalanceCoordinator {
 
     private final LndHandler lndHandler;
     private final RskHandler rskHandler;
-    private final BalanceStatus balanceStatus;
+    private final BalancingStatusRepository balancingStatusRepository;
 
     public void startBalanceChecker() throws Exception {
         log.info("Starting balance checker and checking every 1000 seconds");
+
+        if (!balancingStatusRepository.findById(1L).isPresent()){
+            BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
+            balancingStatusRepository.saveAndFlush(balancingStatus);
+        }
         TimerTask newTransactionProber = new TimerTask() {
             @Override
             public void run() {
@@ -36,7 +44,7 @@ public class BalanceCoordinator {
     }
 
     private void balanceChecker(){
-        if (balanceStatus.getBalancingStatus().equals("idle")) {
+        if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
             log.info("Balance coordinator: Checking balance");
             BigDecimal lndAmount = new BigDecimal(lndHandler.getLightningBalance());
             BigDecimal rskAmount = new BigDecimal(rskHandler.getRskBalance());
@@ -64,7 +72,7 @@ public class BalanceCoordinator {
                 }
             }
         } else {
-            log.info("Balancing status: " + balanceStatus.getBalancingStatus());
+            log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
         }
 
     }
@@ -77,18 +85,24 @@ public class BalanceCoordinator {
     5. it shoudl monitor the loopin swap to see if it was sucesfull
     */
     private void startLoopInProcess(BigDecimal loopAmount){
-        balanceStatus.setBalancingStatus("loopin");
+        var balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.LOOPIN);
+        balancingStatusRepository.save(balancingStatus);
         rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
-
     }
 
     /*
     https://developers.rsk.co/rsk/rbtc/conversion/networks/testnet/
      */
+    /*
+    currently limited to max 500k satoshi loopouts
+     */
     private void startLoopOutProcess(BigDecimal loopAmount){
-        balanceStatus.setBalancingStatus("loopout");
+        var balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.LOOPOUT);
+        balancingStatusRepository.save(balancingStatus);
         if (loopAmount.toBigInteger().compareTo(BigInteger.valueOf(1000000L) ) > 0 ){
-            loopAmount = BigDecimal.valueOf(1000000);
+            loopAmount = BigDecimal.valueOf(1000000L);
         }
         lndHandler.initiateLoopOut(loopAmount.toBigInteger(), btcPublicKey);
     }

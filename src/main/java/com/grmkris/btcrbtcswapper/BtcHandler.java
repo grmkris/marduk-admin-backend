@@ -1,5 +1,8 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.grmkris.btcrbtcswapper.db.BalancingStatus;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,8 +15,6 @@ import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 @Component
 @Slf4j
@@ -32,7 +33,7 @@ public class BtcHandler {
     private BitcoindRpcClient bitcoindRpcClient;
     private final LndHandler lndHandler;
     private final RskHandler rskHandler;
-    private final BalanceStatus balanceStatus;
+    private final BalancingStatusRepository balancingStatusRepository;
 
     @PostConstruct
     public void init() throws MalformedURLException {
@@ -58,7 +59,9 @@ public class BtcHandler {
         String rskFederationAddress = rskHandler.retrieveRskFederationBtcAddress();
         bitcoindRpcClient.sendToAddress(rskFederationAddress, amount);
         // since this is last step of the loop out process we put service back to idle
-        balanceStatus.setBalancingStatus("idle");
+        BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
+        balancingStatusRepository.save(balancingStatus);
         // https://developers.rsk.co/rsk/rbtc/conversion/networks/mainnet/
     }
 

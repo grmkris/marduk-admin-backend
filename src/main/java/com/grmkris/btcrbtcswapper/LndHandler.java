@@ -1,5 +1,8 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.grmkris.btcrbtcswapper.db.BalancingStatus;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -37,14 +40,25 @@ public class LndHandler {
     @Value("${lnd.url}")
     private String lndRestEndpoint;
 
-    private final BalanceStatus balanceStatus;
+    @Value("${lnd.loop.max_swap_routing_fee}")
+    private String max_swap_routing_fee;
+    @Value("${lnd.loop.max_prepay_routing_fee}")
+    private String max_prepay_routing_fee;
+    @Value("${lnd.loop.max_swap_fee}")
+    private String max_swap_fee;
+    @Value("${lnd.loop.max_prepay_amt}")
+    private String max_prepay_amt;
+    @Value("${lnd.loop.max_miner_fee}")
+    private String max_miner_fee;
+
+    private final BalancingStatusRepository balancingStatusRepository;
 
     private WebClient webClient;
 
     private BigInteger lndOnchainWalletBalance;
 
-    public LndHandler(BalanceStatus balanceStatus) throws SSLException {
-        this.balanceStatus = balanceStatus;
+    public LndHandler(BalancingStatusRepository balancingStatusRepository) throws SSLException {
+        this.balancingStatusRepository = balancingStatusRepository;
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
@@ -80,7 +94,7 @@ public class LndHandler {
     public void initiateLoopIn(BigInteger value){
         Map<String, String> requestBodyMap = new HashMap<>();
         requestBodyMap.put("amt", value.toString());
-        requestBodyMap.put("max_swap_fee", "500"); // TODO parameterize this
+        requestBodyMap.put("max_swap_fee", max_swap_fee); // TODO parameterize this
 
         String responseBody = webClient.post()
                 .uri(loopRestEndpoint+ "/v1/loop/in")
@@ -94,16 +108,21 @@ public class LndHandler {
 
         log.info("Sent loop in request through LND: {}", responseBody);
         // loopin is last step of the swap, so we put service back to idle
-        balanceStatus.setBalancingStatus("idle");
+        BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
+        balancingStatusRepository.save(balancingStatus);
     }
 
     public void initiateLoopOut(BigInteger value, String destination){
         Map<String, String> requestBodyMap = new HashMap<>();
         requestBodyMap.put("dest", destination);
         requestBodyMap.put("amt", value.toString());
-        requestBodyMap.put("max_swap_fee", "500"); // TODO parameterize this
-        requestBodyMap.put("max_swap_routing_fee", "500");
-        requestBodyMap.put("max_prepay_amt", "2000"); // TODO parameterize this, with lower amounts swaps are failing
+        requestBodyMap.put("max_swap_fee", max_swap_fee);
+        requestBodyMap.put("max_swap_routing_fee", max_swap_routing_fee);
+        requestBodyMap.put("max_prepay_amt", max_prepay_amt);
+        requestBodyMap.put("max_miner_fee", max_miner_fee);
+        requestBodyMap.put("max_prepay_routing_fee", max_prepay_routing_fee);
+        requestBodyMap.put("initiator", "rbtc_btc_swapper");
 
         String responseBody = webClient.post()
                 .uri(loopRestEndpoint+ "/v1/loop/out")

@@ -1,5 +1,7 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +48,7 @@ public class RskHandler {
 
     private Web3j web3j;
     private Credentials credentials;
-    private final BalanceStatus balanceStatus;
+    private final BalancingStatusRepository balancingStatusRepository;
 
 
     @PostConstruct
@@ -78,9 +80,9 @@ public class RskHandler {
                 log.info("Found transaction from: {}", tx.getFrom());
                 confirmTransaction(tx);
                 log.info("Transaction confirmed");
-                if (balanceStatus.getBalancingStatus().equals("loopin")){
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPIN)){
                     log.info("Received transaction to RSK wallet while loopin");
-                } else if (balanceStatus.getBalancingStatus().equals("loopout")) {
+                } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPOUT)) {
                     log.info("Received transaction to RSK wallet while loopout");
                 } else {
                     log.info("Received transaction to RSK wallet while idling");
