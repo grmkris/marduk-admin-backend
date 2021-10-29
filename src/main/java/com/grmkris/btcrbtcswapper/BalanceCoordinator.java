@@ -45,7 +45,7 @@ public class BalanceCoordinator {
 
     private void balanceChecker(){
         if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
-            log.info("Balance coordinator: Checking balance");
+            log.info("Balance status: {};  Checking balance", balancingStatusRepository.findById(1L).get().getBalancingStatus());
             BigDecimal lndAmount = new BigDecimal(lndHandler.getLightningBalance());
             BigDecimal rskAmount = new BigDecimal(rskHandler.getRskBalance());
 
@@ -101,8 +101,8 @@ public class BalanceCoordinator {
         var balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.LOOPOUT);
         balancingStatusRepository.save(balancingStatus);
-        if (loopAmount.toBigInteger().compareTo(BigInteger.valueOf(1000000L) ) > 0 ){
-            loopAmount = BigDecimal.valueOf(1000000L);
+        if (loopAmount.toBigInteger().compareTo(BigInteger.valueOf(500000L) ) > 0 ){
+            loopAmount = BigDecimal.valueOf(500000L);
         }
         lndHandler.initiateLoopOut(loopAmount.toBigInteger(), btcPublicKey);
     }

@@ -55,8 +55,6 @@ public class LndHandler {
 
     private WebClient webClient;
 
-    private BigInteger lndOnchainWalletBalance;
-
     public LndHandler(BalancingStatusRepository balancingStatusRepository) throws SSLException {
         this.balancingStatusRepository = balancingStatusRepository;
         SslContext sslContext = SslContextBuilder

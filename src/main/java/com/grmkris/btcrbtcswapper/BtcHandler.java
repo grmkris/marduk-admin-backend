@@ -58,10 +58,12 @@ public class BtcHandler {
     public void sendToBtcRskFederationAddress(BigDecimal amount) {
         String rskFederationAddress = rskHandler.retrieveRskFederationBtcAddress();
         bitcoindRpcClient.sendToAddress(rskFederationAddress, amount);
+        log.info("Sent funds to RSK federation address, LOOPOUT complete");
         // since this is last step of the loop out process we put service back to idle
         BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
         balancingStatusRepository.save(balancingStatus);
+        log.info("Returning balancing status to IDLE");
         // https://developers.rsk.co/rsk/rbtc/conversion/networks/mainnet/
     }
 

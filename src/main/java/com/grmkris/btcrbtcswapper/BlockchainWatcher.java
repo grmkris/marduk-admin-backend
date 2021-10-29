@@ -31,7 +31,7 @@ public class BlockchainWatcher {
                 if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
                     return;
                 }
-                log.info("Service status: {} Probing for new Bitcoin transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
+                //log.info("Service status: {} Probing for new Bitcoin transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var newBtcWalletBalance = btcHandler.getBtcWalletBalance();
                 var amountToSend= newBtcWalletBalance.subtract(btcWalletBalance);
                 if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
@@ -55,10 +55,10 @@ public class BlockchainWatcher {
         lndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
-                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) | balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPOUT)) {
                     return;
                 }
-                log.info("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
+                //log.debug("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var newlndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
                 if (newlndOnchainWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
                     log.info("Received new onchain transaction to LND wallet, amount: {} ", lndOnchainWalletBalance);
