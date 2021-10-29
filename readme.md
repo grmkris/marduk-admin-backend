@@ -19,6 +19,21 @@ It uses lightning loop service to do either:
      5. this service sends coins from "rsk-paired" wallet to RSK-Federation address
      6. after 100 confirmations funds are available in RSK wallet
 
+
+## Before running
+1. unlock lnd wallet you are connecting to (`lncli unlock`)
+2. load new account to bitcoind 
+   - `bitcoin-cli -chain=test -rpcpassword=password -rpcuser=rpcuser createwallet boltz-testnet-btc-wallet`
+   - `bitcoin-cli -chain=test -rpcpassword=password -rpcuser=rpcuser loadwallet boltz-testnet-btc-wallet`
+   Verify by: 
+     - `bitcoin-cli -chain=test -rpcpassword=qqqwwweeerrrtttooo -rpcuser=kristjan1234 listwallets`
+       - `["boltz-testnet-btc-wallet"]`
+3. start loop client
+    -eg: `./loopd --network=testnet --lnd.macaroonpath=/var/lib/docker/volumes/bitcoind-lnd_bitcoin/_data/data/chain/bitcoin/testnet/admin.macaroon  --lnd.tlspath=/var/lib/docker/volumes/bitcoind-lnd_bitcoin/_data/tls.cert --tlsextraip=185.217.125.196 --restlisten=185.217.125.196:8081`
+4. Java stuff
+   1. make sure you have java11, then run `mvn clean package`
+   2. go to `cd target`
+   3. start with `java jar RbtcBtcSwapper.java -DRSK_SERVICE_URL=URL` etc... etc.
 ### This service requires access to the following information:
 
 ```properties
