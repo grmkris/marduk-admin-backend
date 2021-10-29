@@ -30,10 +30,29 @@ It uses lightning loop service to do either:
        - `["boltz-testnet-btc-wallet"]`
 3. start loop client
     -eg: `./loopd --network=testnet --lnd.macaroonpath=/var/lib/docker/volumes/bitcoind-lnd_bitcoin/_data/data/chain/bitcoin/testnet/admin.macaroon  --lnd.tlspath=/var/lib/docker/volumes/bitcoind-lnd_bitcoin/_data/tls.cert --tlsextraip=185.217.125.196 --restlisten=185.217.125.196:8081`
-4. Java stuff
-   1. make sure you have java11, then run `mvn clean package`
-   2. go to `cd target`
-   3. start with `java jar RbtcBtcSwapper.java -DRSK_SERVICE_URL=URL` etc... etc.
+   1. Java stuff
+      1. make sure you have java11, then run `mvn package -Dmaven.test.skip=true`
+      2. go to `cd target`
+      3. start with `java jar btc-rbtc-swapper-0.0.1-SNAPSHOT.jar -DRSK_SERVICE_URL=URL` etc... etc.
+        example: 
+       ```shell
+           java \
+           -DRSK_BRIDGE_ADDRESS=some_value \
+           -DRSK_WALLET_PRIVATE_KEY=some_value \
+           -DRSK_WALLET_PUBLIC_KEY=some_value \
+           -DRSK_SERVICE_URL=https://public-node.testnet.rsk.co \
+           -DBTC_SERVICE_URL=some_value \
+           -DBTC_RPC_COOKIE=some_value \
+           -DLND_WALLET_ADDRESS= \
+           -DLND_LOOP_URL=some_value \
+           -DLND_LOOP_ADMIN_MACAROON=some_value \
+           -DBTC_WALLET_PRIVATE_KEY=some_value \
+           -DBTC_WALLET_PUBLIC_KEY=some_value \
+           -DLND_ADMIN_MACAROON=some_value \
+           -DLND_URL=some_value \
+           -jar target/btc-rbtc-swapper-0.0.1-SNAPSHOT.jar
+       ```
+
 ### This service requires access to the following information:
 
 ```properties
@@ -73,7 +92,10 @@ lnd.loop.url=${LND_LOOP_URL}
 lnd.loop.admin.macaroon=${LND_LOOP_ADMIN_MACAROON}
 
 ```
-
+### TODO
+- monitor loop swap status and retry it if it fails with higher max fees
+- add information about swaps to database
+- use exchange API instead of RSK powpeg for faster balancing
 
 ## Helpful information
 ### RSK

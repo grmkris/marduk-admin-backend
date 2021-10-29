@@ -43,13 +43,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- https://bitcoinj.org/using-maven -->
-        <dependency>
-            <groupId>org.bitcoinj</groupId>
-            <artifactId>bitcoinj-core</artifactId>
-            <version>0.15.10</version>
-            <scope>compile</scope>
-        </dependency>
         <!-- https://docs.web3j.io/4.8.7/ -->
         <dependency>
             <groupId>org.web3j</groupId>
@@ -80,7 +73,6 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
     </dependencies>
