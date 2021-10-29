@@ -1,5 +1,9 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
@@ -7,10 +11,9 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
@@ -20,6 +23,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
+import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLException;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -28,6 +32,7 @@ import java.util.Map;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class LndHandler {
 
     @Value("${lnd.loop.admin.macaroon}")
@@ -55,8 +60,8 @@ public class LndHandler {
 
     private WebClient webClient;
 
-    public LndHandler(BalancingStatusRepository balancingStatusRepository) throws SSLException {
-        this.balancingStatusRepository = balancingStatusRepository;
+    @PostConstruct
+    public void init() throws SSLException {
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
@@ -79,10 +84,13 @@ public class LndHandler {
                 ).block();
         String localbalance = "0";
         try {
-            JSONObject jsonObject = new JSONObject(responseBody);
-            localbalance = jsonObject.getString("confirmed_balance");
-        } catch (JSONException e) {
-            log.error("Error parsing lnd api /v1/balance/channels");
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(responseBody);
+            localbalance  = node.get("confirmed_balance").asText();
+        }  catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
         log.info("Retrieved Lightning onchain balance: {}", localbalance);
         return BigInteger.valueOf(Long.parseLong(localbalance));
@@ -145,9 +153,14 @@ public class LndHandler {
                 ).block();
         String address = "0";
         try {
-            JSONObject jsonObject = new JSONObject(responseBody);
-            address = jsonObject.getString("address");
-        } catch (JSONException e) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(responseBody);
+            address  = node.get("address").asText();
+        }  catch (JsonMappingException e) {
+            e.printStackTrace();
+            log.error("Error parsing lnd api /v1/balance/channels");
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
             log.error("Error parsing lnd api /v1/balance/channels");
         }
         log.info("New onchain Lightning address: {}", address);
@@ -166,9 +179,14 @@ public class LndHandler {
                 ).block();
         String localbalance = "0";
         try {
-            JSONObject jsonObject = new JSONObject(responseBody);
-            localbalance = jsonObject.getJSONObject("local_balance").getString("sat");
-        } catch (JSONException e) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(responseBody);
+            localbalance  = node.get("local_balance").get("sat").asText();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+            log.error("Error parsing lnd api /v1/balance/channels");
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
             log.error("Error parsing lnd api /v1/balance/channels");
         }
         log.info("Retrieved Lightning balance: {}", localbalance);

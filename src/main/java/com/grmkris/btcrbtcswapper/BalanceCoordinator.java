@@ -6,6 +6,7 @@ import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,14 +18,23 @@ import java.util.TimerTask;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class BalanceCoordinator {
+public class BalanceCoordinator implements CommandLineRunner {
 
     @Value("${btc.wallet.public.key}")
     private String btcPublicKey;
 
     private final LndHandler lndHandler;
     private final RskHandler rskHandler;
+    private final BlockchainWatcher blockchainWatcher;
     private final BalancingStatusRepository balancingStatusRepository;
+
+    @Override
+    public void run(String... args) throws Exception {
+        log.info("TESTING: {}", btcPublicKey);
+        blockchainWatcher.startLNDTransactionWatcher();
+        blockchainWatcher.startBTCTransactionWatcher();
+        this.startBalanceChecker();
+    }
 
     public void startBalanceChecker() throws Exception {
         log.info("Starting balance checker and checking every 1000 seconds");

@@ -41,10 +41,12 @@ public class BtcHandler {
         URL url;
         if (btcServiceUrl.contains("https")) {
             url = new URL("https://" + btcRpcCookie + "@" + btcServiceUrl.substring(8));
-        } else {
+            bitcoindRpcClient = new BitcoinJSONRPCClient(url);
+        } else if (!btcServiceUrl.equals("")){
             url = new URL("http://" + btcRpcCookie + "@" + btcServiceUrl);
+            bitcoindRpcClient = new BitcoinJSONRPCClient(url);
         }
-        bitcoindRpcClient = new BitcoinJSONRPCClient(url);
+
     }
 
     public BigDecimal getBtcWalletBalance() {

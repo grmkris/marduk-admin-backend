@@ -53,13 +53,15 @@ public class RskHandler {
 
     @PostConstruct
     void init() {
-        web3j = Web3j.build(new HttpService(serverurl));  //web3j  object after connecting with server for transaction
-        credentials = Credentials.create(rskPrivateKey);
-
-        String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
-        String publicKey = credentials.getEcKeyPair().getPublicKey().toString(16);
-        String addr = credentials.getAddress();
-        rskPublicKey = addr;
+        web3j = Web3j.build(new HttpService(serverurl));
+        if (!rskPrivateKey.equals("")){
+            //web3j  object after connecting with server for transaction
+            credentials = Credentials.create(rskPrivateKey);
+            String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
+            String publicKey = credentials.getEcKeyPair().getPublicKey().toString(16);
+            String addr = credentials.getAddress();
+            rskPublicKey = addr;
+        }
     }
 
     public void run(String... args) throws Exception {
