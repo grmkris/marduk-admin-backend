@@ -30,7 +30,6 @@ public class BalanceCoordinator implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("TESTING: {}", btcPublicKey);
         blockchainWatcher.startLNDTransactionWatcher();
         blockchainWatcher.startBTCTransactionWatcher();
         this.startBalanceChecker();
