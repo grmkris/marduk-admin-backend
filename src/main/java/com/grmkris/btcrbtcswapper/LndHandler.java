@@ -97,7 +97,7 @@ public class LndHandler {
     }
 
 
-    public void initiateLoopIn(BigInteger value){
+    public String initiateLoopIn(BigInteger value){
         Map<String, String> requestBodyMap = new HashMap<>();
         requestBodyMap.put("amt", value.toString());
         requestBodyMap.put("max_swap_fee", max_swap_fee); // TODO parameterize this
@@ -112,11 +112,8 @@ public class LndHandler {
                                 .map(stringBody -> stringBody)
                 ).block();
 
-        log.info("Sent loop in request through LND: {}", responseBody);
-        // loopin is last step of the swap, so we put service back to idle
-        BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
-        balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
-        balancingStatusRepository.save(balancingStatus);
+        return responseBody;
+
     }
 
     public void initiateLoopOut(BigInteger value, String destination){

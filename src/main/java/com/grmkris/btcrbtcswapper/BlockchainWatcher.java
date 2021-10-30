@@ -1,5 +1,6 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,9 +37,19 @@ public class BlockchainWatcher {
                 var amountToSend= newBtcWalletBalance.subtract(btcWalletBalance);
                 if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
                     if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)) {
+                        log.info("PEGIN: new BTC transaction detected, amount {}", amountToSend);
                         btcHandler.sendToLightningNode(amountToSend);
+                        log.info("Sent funds to lightning node");
                     } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
+                        log.info("PEGIN: new BTC transaction detected, amount {}", amountToSend);
                         btcHandler.sendToBtcRskFederationAddress(amountToSend);
+                        log.info("Sent funds to RSK federation address, LOOPOUT complete");
+                        // since this is last step of the loop out process we put service back to idle
+                        BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
+                        balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
+                        balancingStatusRepository.save(balancingStatus);
+                        log.info("Returning balancing status to IDLE");
+                        // https://developers.rsk.co/rsk/rbtc/conversion/networks/mainnet/
                     } else {
                         log.warn("Received transaction to bitcoin private key, while idling");
                     }
@@ -55,14 +66,20 @@ public class BlockchainWatcher {
         lndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
-                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) | balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) || balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
                     return;
                 }
                 //log.debug("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var newlndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
                 if (newlndOnchainWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
                     log.info("Received new onchain transaction to LND wallet, amount: {} ", lndOnchainWalletBalance);
-                    lndHandler.initiateLoopIn(newlndOnchainWalletBalance.subtract(lndOnchainWalletBalance));
+                    var response = lndHandler.initiateLoopIn(newlndOnchainWalletBalance.subtract(lndOnchainWalletBalance));
+                    log.info("Sent loop in request through LND: {}", response);
+                    // loopin is last step of the swap, so we put service back to idle
+                    BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
+                    balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
+                    balancingStatusRepository.save(balancingStatus);
+                    log.info("Returned balancing status to IDLE");
                 }
                 lndOnchainWalletBalance = newlndOnchainWalletBalance;
             }
