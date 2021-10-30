@@ -82,9 +82,9 @@ public class RskHandler {
                 log.info("Found transaction from: {}", tx.getFrom());
                 confirmTransaction(tx);
                 log.info("Transaction confirmed");
-                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPIN)){
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)){
                     log.info("Received transaction to RSK wallet while loopin");
-                } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPOUT)) {
+                } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
                     log.info("Received transaction to RSK wallet while loopout");
                 } else {
                     log.info("Received transaction to RSK wallet while idling");

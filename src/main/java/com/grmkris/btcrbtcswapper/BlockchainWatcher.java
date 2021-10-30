@@ -35,9 +35,9 @@ public class BlockchainWatcher {
                 var newBtcWalletBalance = btcHandler.getBtcWalletBalance();
                 var amountToSend= newBtcWalletBalance.subtract(btcWalletBalance);
                 if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
-                    if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPIN)) {
+                    if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)) {
                         btcHandler.sendToLightningNode(amountToSend);
-                    } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPOUT)) {
+                    } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
                         btcHandler.sendToBtcRskFederationAddress(amountToSend);
                     } else {
                         log.warn("Received transaction to bitcoin private key, while idling");
@@ -55,7 +55,7 @@ public class BlockchainWatcher {
         lndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
-                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) | balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.LOOPOUT)) {
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) | balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
                     return;
                 }
                 //log.debug("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
