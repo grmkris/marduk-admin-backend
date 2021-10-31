@@ -134,7 +134,7 @@ public class RskHandler {
                 TransactionReceipt transactionReceipt = Transfer.sendFunds(
                         web3j, credentials, rskBridgeAddress,
                         amount, Convert.Unit.GWEI).send();
-                log.info("Sent funds to BTCSwapContract: {}, transaction hash: {}", rskBridgeAddress, transactionReceipt.getTransactionHash());
+                log.info("Sent {} sats to BTCSwapContract: {}, transaction hash: {}", amount, rskBridgeAddress, transactionReceipt.getTransactionHash());
                 return transactionReceipt;
             } catch (Exception e) {
                 log.info("Error while sending funds to BTCSwapContract: {}", e);
