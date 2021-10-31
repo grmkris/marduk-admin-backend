@@ -102,7 +102,7 @@ public class LndHandler {
         requestBodyMap.put("amt", value.toString());
         requestBodyMap.put("max_swap_fee", max_swap_fee); // TODO parameterize this
 
-        String responseBody = webClient.post()
+        return webClient.post()
                 .uri(loopRestEndpoint+ "/v1/loop/in")
                 .header("Grpc-Metadata-macaroon", loopAdminMacaroon)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -111,8 +111,6 @@ public class LndHandler {
                         response.bodyToMono(String.class)
                                 .map(stringBody -> stringBody)
                 ).block();
-
-        return responseBody;
 
     }
 

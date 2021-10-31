@@ -73,8 +73,10 @@ public class BlockchainWatcher {
                 var newlndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
                 if (newlndOnchainWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
                     log.info("Received new onchain transaction to LND wallet, amount: {} ", lndOnchainWalletBalance);
-                    var response = lndHandler.initiateLoopIn(newlndOnchainWalletBalance.subtract(lndOnchainWalletBalance));
-                    log.info("Sent loop in request through LND: {}", response);
+                    var amount = newlndOnchainWalletBalance.subtract(lndOnchainWalletBalance);
+                    var response = lndHandler.initiateLoopIn(amount);
+                    log.info("Sent loop in request through LND, amount: {}", amount);
+                    log.info(response);
                     // loopin is last step of the swap, so we put service back to idle
                     BalancingStatus balancingStatus = balancingStatusRepository.findById(1L).get();
                     balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
