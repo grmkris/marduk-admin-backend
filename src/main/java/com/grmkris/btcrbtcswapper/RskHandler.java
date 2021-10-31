@@ -130,7 +130,7 @@ public class RskHandler {
     public TransactionReceipt sendToRskBtcBridge(BigDecimal amount) {
         while (true) {
             try {
-                log.info("Sending funds to BTCSwapContract: {}", rskBridgeAddress);
+                log.info("Sending {} sats to BTCSwapContract: {}", amount, rskBridgeAddress);
                 TransactionReceipt transactionReceipt = Transfer.sendFunds(
                         web3j, credentials, rskBridgeAddress,
                         amount, Convert.Unit.GWEI).send();
