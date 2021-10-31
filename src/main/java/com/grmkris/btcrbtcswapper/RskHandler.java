@@ -137,7 +137,7 @@ public class RskHandler {
                 log.info("Sent funds to BTCSwapContract: {}, transaction hash: {}", rskBridgeAddress, transactionReceipt.getTransactionHash());
                 return transactionReceipt;
             } catch (Exception e) {
-                log.info("Error while sending funds to BTCSwapContract", e);
+                log.info("Error while sending funds to BTCSwapContract");
                 log.info("Retrying");
             }
         }
