@@ -138,7 +138,12 @@ public class RskHandler {
                 return transactionReceipt;
             } catch (Exception e) {
                 log.info("Error while sending funds to BTCSwapContract");
-                log.info("Retrying");
+                try {
+                    log.info("Retrying in 10 seconds");
+                    Thread.sleep(10000);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
