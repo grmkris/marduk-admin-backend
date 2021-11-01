@@ -133,13 +133,14 @@ public class RskHandler {
                 log.info("Sending {} sats to BTCSwapContract: {}", amount, rskBridgeAddress);
                 TransactionReceipt transactionReceipt = Transfer.sendFunds(
                         web3j, credentials, rskBridgeAddress,
-                        amount, Convert.Unit.GWEI).send();
+                        amount, Convert.Unit.GWEI).sendAsync().get();
                 log.info("Sent {} sats to BTCSwapContract: {}, transaction hash: {}", amount, rskBridgeAddress, transactionReceipt.getTransactionHash());
                 return transactionReceipt;
             } catch (Exception e) {
-                log.info("Error while sending funds to BTCSwapContract: {}", e);
+                log.warn("Error while sending funds to BTCSwapContract");
+                log.warn(e.getMessage());
                 try {
-                    log.info("Retrying in 10 seconds");
+                    log.warn("Retrying in 10 seconds");
                     Thread.sleep(10000);
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
