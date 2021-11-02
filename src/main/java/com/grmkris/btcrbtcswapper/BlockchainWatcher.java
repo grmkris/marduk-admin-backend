@@ -29,6 +29,7 @@ public class BlockchainWatcher {
         btcWalletBalance = btcHandler.getBtcWalletBalance();
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
+                log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
                     return;
                 }
@@ -66,14 +67,15 @@ public class BlockchainWatcher {
         lndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
+                log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) || balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
                     return;
                 }
                 //log.debug("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var newlndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
                 if (newlndOnchainWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
-                    log.info("Received new onchain transaction to LND wallet, amount: {} ", lndOnchainWalletBalance);
                     var amount = newlndOnchainWalletBalance.subtract(lndOnchainWalletBalance);
+                    log.info("Received new onchain transaction to LND wallet, amount: {} ", lndOnchainWalletBalance);
                     var response = lndHandler.initiateLoopIn(amount);
                     log.info("Sent loop in request through LND, amount: {}", amount);
                     log.info(response);

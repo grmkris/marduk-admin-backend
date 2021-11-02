@@ -62,7 +62,7 @@ public class BalanceCoordinator implements CommandLineRunner {
             if (lndAmount.compareTo(rskAmount) < 0){
                 if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
                     BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(lndAmount);
-                    log.info("Lightning balance below 30%, initiating rsk pegout, amount: {} sats", loopAmount);
+                    log.info("Lightning balance below 30%, initiating rsk PEGOUT, amount: {} sats", loopAmount);
                     startLoopInProcess(loopAmount);
                 }
                 else {
@@ -73,7 +73,7 @@ public class BalanceCoordinator implements CommandLineRunner {
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
                     BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
-                    log.info("RSK balance below 30%, initiating rsk pegout, amount: {} sats", loopAmount);
+                    log.info("RSK balance below 30%, initiating rsk PEGIN, amount: {} sats", loopAmount);
                     startLoopOutProcess(loopAmount);
                 }
                 else {
