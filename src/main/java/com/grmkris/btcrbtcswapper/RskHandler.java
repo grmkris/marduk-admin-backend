@@ -153,9 +153,11 @@ public class RskHandler {
         EthGetBalance balanceWei = null;
         try {
             log.info("Retrieving rsk balance");
-            balanceWei = web3j.ethGetBalance(rskPublicKey, DefaultBlockParameterName.LATEST).send();
-        } catch (IOException e) {
-            log.error("Error retrieving rsk balance");
+            balanceWei = web3j.ethGetBalance(rskPublicKey, DefaultBlockParameterName.LATEST).sendAsync().get();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         BigDecimal balance = Convert.fromWei(balanceWei.getBalance().toString(), Convert.Unit.GWEI).divide(BigDecimal.TEN);
         log.info("Retrieved rsk balance: " + balance);

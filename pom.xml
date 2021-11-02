@@ -49,6 +49,17 @@
             <artifactId>core</artifactId>
             <version>5.0.0</version>
         </dependency>
+        <!-- HTTP -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>4.9.2</version>
+        </dependency>
         <!-- https://github.com/Polve/bitcoin-rpc-client -->
         <dependency>
             <groupId>wf.bitcoin</groupId>
