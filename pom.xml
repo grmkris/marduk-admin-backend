@@ -47,7 +47,7 @@
         <dependency>
             <groupId>org.web3j</groupId>
             <artifactId>core</artifactId>
-            <version>3.3.1</version>
+            <version>5.0.0</version>
         </dependency>
         <!-- https://github.com/Polve/bitcoin-rpc-client -->
         <dependency>

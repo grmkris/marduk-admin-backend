@@ -74,7 +74,7 @@ public class RskHandler {
     }
     private void startNewTransactionListener() {
         //Ethereum listener started here tx is web3j transaction object described below
-        web3j.pendingTransactionObservable().subscribe(tx -> {
+        web3j.pendingTransactionFlowable().subscribe(tx -> {
             log.info("New transaction arrived to the chain");
             // using equalsIgnoreCase because for some reason the addresses don't match when comparing them without ignoring case
             // probably rsk <> eth compatibilty stuff
