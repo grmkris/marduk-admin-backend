@@ -37,11 +37,11 @@ public class BlockchainWatcher {
                 var newBtcWalletBalance = btcHandler.getBtcWalletBalance();
                 var amountToSend= newBtcWalletBalance.subtract(btcWalletBalance);
                 if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
-                    if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)) {
-                        log.info("PEGIN: new BTC transaction detected, amount {}", amountToSend);
+                    if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
+                        log.info("PEGOUT: new BTC transaction detected, amount {}", amountToSend);
                         btcHandler.sendToLightningNode(amountToSend);
                         log.info("Sent funds to lightning node");
-                    } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
+                    } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)) {
                         log.info("PEGIN: new BTC transaction detected, amount {}", amountToSend);
                         btcHandler.sendToBtcRskFederationAddress(amountToSend);
                         log.info("Sent funds to RSK federation address, LOOPOUT complete");
@@ -68,7 +68,7 @@ public class BlockchainWatcher {
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
                 log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
-                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) || balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) || balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)) {
                     return;
                 }
                 //log.debug("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
