@@ -1,7 +1,5 @@
 package com.grmkris.btcrbtcswapper;
 
-import com.grmkris.btcrbtcswapper.db.BalancingStatus;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
