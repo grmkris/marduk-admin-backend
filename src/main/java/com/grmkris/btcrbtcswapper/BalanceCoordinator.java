@@ -1,5 +1,6 @@
 package com.grmkris.btcrbtcswapper;
 
+import com.grmkris.btcrbtcswapper.bitfinex.BitfinexHandler;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
@@ -23,16 +24,22 @@ public class BalanceCoordinator implements CommandLineRunner {
     @Value("${btc.wallet.public.key}")
     private String btcPublicKey;
 
+    @Value("${balancing.enabled}")
+    private Boolean balancingEnabled;
+
     private final LndHandler lndHandler;
     private final RskHandler rskHandler;
     private final BlockchainWatcher blockchainWatcher;
     private final BalancingStatusRepository balancingStatusRepository;
+    private final BitfinexHandler bitfinexHandler;
 
     @Override
     public void run(String... args) throws Exception {
         blockchainWatcher.startLNDTransactionWatcher();
         blockchainWatcher.startBTCTransactionWatcher();
-        this.startBalanceChecker();
+        if (balancingEnabled) {
+            this.startBalanceChecker();
+        }
     }
 
     public void startBalanceChecker() throws Exception {
