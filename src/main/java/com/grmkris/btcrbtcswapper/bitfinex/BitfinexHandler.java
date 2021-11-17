@@ -1,9 +1,6 @@
 package com.grmkris.btcrbtcswapper.bitfinex;
 
 import io.netty.handler.logging.LogLevel;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -21,10 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
-import wf.bitcoin.krotjson.JSON;
 
 import javax.annotation.PostConstruct;
 import javax.crypto.Mac;
@@ -35,9 +30,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,22 +60,24 @@ public class BitfinexHandler {
                 c.defaultCodecs().enableLoggingRequestDetails(true)).build()
         ).clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
-        try {
-            log.info("Getting bitfinex account info");
-            // this.getWalletBalance();
-            var result = this.getBitcoinAPIAddress();
-            log.info("Retrieved bitcoin network deposit address from bitfinex: \r\n {}", result);
+        log.info("Getting bitfinex account info");
+        // this.getWalletBalance();
+        // var result = this.getBitcoinAPIAddress();
+        // log.info("Retrieved bitcoin network deposit address from bitfinex: \r\n {}", result);
 
-            result = this.getUserInfo();
-            log.info("Retrieved userinfo {} ", result);
-            // var result1 = this.getRBTCDepositAddress();
-            // log.info("Retrieved rbtc network deposit address from bitfinex: \r\n {}", result1);
+        // result = this.getUserInfo();
+        // log.info("Retrieved userinfo {} ", result);
+        // var result1 = this.getRBTCDepositAddress();
+        // log.info("Retrieved rbtc network deposit address from bitfinex: \r\n {}", result1);
 
-            result = this.getLightningInvoice();
-            log.info("Retrieved lightning invoice {} ", result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // result = this.getLightningInvoice();
+        // log.info("Retrieved lightning invoice {} ", result);
+
+        var result = this.tradeRBTCforBTC();
+        log.info("Created the trade {}", result);
+
+        result = this.convertBTCToLightning();
+        log.info("Converted btc to lnx, {}", result);
     }
 
     private void getWalletBalance() throws IOException {
@@ -198,12 +192,82 @@ public class BitfinexHandler {
     }
 
 
-    private String sellBTCforRBTC() {
-        return "";
+    private String tradeRBTCforBTC() {
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("type", "EXCHANGE MARKET");
+        requestBodyMap.put("symbol", "tRBTBTC");
+        //requestBodyMap.put("price", 0.002);
+        requestBodyMap.put("amount", "-0.00006"); // TODO parameterize amount
+        requestBodyMap.put("flags", 0);
+        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/order/submit")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/order/submit", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
     }
 
-    private String sellRBTCforBTC() {
-        return "";
+    private String tradeBTCforRBTC() {
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("type", "EXCHANGE MARKET");
+        requestBodyMap.put("symbol", "tRBTBTC");
+        //requestBodyMap.put("price", 0.002);
+        requestBodyMap.put("amount", "0.00006"); // TODO parameterize amount
+        requestBodyMap.put("flags", 0);
+        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/order/submit")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/order/submit", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+    }
+
+    private String convertBTCToLightning() {
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("from", "exchange");
+        requestBodyMap.put("to", "exchange");
+        requestBodyMap.put("currency", "BTC");
+        requestBodyMap.put("currency_to", "LNX"); // TODO parameterize amount
+        requestBodyMap.put("amount", "0.00006");
+        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/transfer")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/transfer", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
     }
 
 
