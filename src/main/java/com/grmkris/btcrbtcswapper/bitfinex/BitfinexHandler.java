@@ -73,11 +73,17 @@ public class BitfinexHandler {
         // result = this.getLightningInvoice();
         // log.info("Retrieved lightning invoice {} ", result);
 
-        var result = this.tradeRBTCforBTC();
-        log.info("Created the trade {}", result);
+        // var result = this.tradeRBTCforBTC();
+        // log.info("Created the trade {}", result);
 
-        result = this.convertBTCToLightning();
-        log.info("Converted btc to lnx, {}", result);
+        // result = this.convertBTCToLightning();
+        // log.info("Converted btc to lnx, {}", result);
+
+        // var result = this.withdrawRBTC();
+        // log.info("Withdraw rbtc, {}", result);
+
+        var result = this.withdrawLightning();
+        log.info("Withdraw lightning, {}", result);
     }
 
     private void getWalletBalance() throws IOException {
@@ -262,6 +268,56 @@ public class BitfinexHandler {
                 .header("bfx-nonce", nonce)
                 .header("bfx-apikey", apiKey)
                 .header("bfx-signature", generateSignature("v2/auth/w/transfer", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+    }
+
+    public String withdrawLightning() {
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("wallet", "exchange");
+        requestBodyMap.put("method", "LNX");
+        //requestBodyMap.put("amount", "6000");
+        requestBodyMap.put("invoice", "lnbc60u1pse2nappp5gx0p9ehm2zk843dte0s2mr5m2d87y7xme39c5fdx2p82ts6zmc5sdqgw9chzut3xqyjw5qcqpjsp5ezp7p5smtgxw8f3l86whtg4sr5l4t0l2m0d5dxlyvtm9e0fqsuqsrzjqwwpe4vgx9ngul7jhz0l92t0ap5ywr3kp6qn7l70ylchqd6wvy2azz5v5qqq23gqqyqqqqlgqqqqqqgq9q9qy9qsqqdzu2meskq20j49ek3v72s75jsd2lxq3juzvlymjfnqjexv93qnxnk4aqut8musv33ep56dxy3ej2czgh3edmurnnwwv5gmpxr4ej0gqjxm9re"); // TODO parameterize amount
+        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/withdraw")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/withdraw", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+    }
+
+    public String withdrawRBTC() {
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("wallet", "exchange");
+        requestBodyMap.put("method", "RBT");
+        requestBodyMap.put("amount", "0.00006");
+        requestBodyMap.put("address", "0x0Cf84F01C311Dc093969136B1814F05B5b3167F6"); // TODO parameterize amount
+        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/withdraw")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/withdraw", nonce, requestBodyMap))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(json.toString()))
                 .exchangeToMono(response ->
