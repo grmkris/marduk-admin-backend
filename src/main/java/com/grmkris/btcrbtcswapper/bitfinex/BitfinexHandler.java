@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -72,8 +73,14 @@ public class BitfinexHandler {
             // this.getWalletBalance();
             var result = this.getBitcoinAPIAddress();
             log.info("Retrieved bitcoin network deposit address from bitfinex: \r\n {}", result);
+
+            result = this.getUserInfo();
+            log.info("Retrieved userinfo {} ", result);
             // var result1 = this.getRBTCDepositAddress();
             // log.info("Retrieved rbtc network deposit address from bitfinex: \r\n {}", result1);
+
+            result = this.getLightningInvoice();
+            log.info("Retrieved lightning invoice {} ", result);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -97,41 +104,117 @@ public class BitfinexHandler {
         var result = bitfinex.getAccountService().requestDepositAddress(currency);
         return  result;
     }
-
+    // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
     private String getBitcoinAPIAddress() throws IOException {
 
-        Map<String, String> requestBodyMap = new HashMap<>();
-        requestBodyMap.put("wallet", "trading");
-        requestBodyMap.put("method", "bitcoin"); // TODO parameterize this
-        requestBodyMap.put("op_renew", "0");
-
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("wallet", "exchange");
+        requestBodyMap.put("method", "Bitcoin"); // TODO parameterize this
+        requestBodyMap.put("op_renew", 0);
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
         return webClient.post()
                 .uri(bitfinexApiUrl+ "v2/auth/w/deposit/address")
-                .header("bfx-nonce", String.valueOf(System.currentTimeMillis()))
+                .header("bfx-nonce", nonce)
                 .header("bfx-apikey", apiKey)
-                .header("bfx-signature", generateSignature("v2/auth/w/deposit/address", String.valueOf(nonce), requestBodyMap))
+                .header("bfx-signature", generateSignature("v2/auth/w/deposit/address", nonce, requestBodyMap))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(requestBodyMap), Map.class)
+                .body(BodyInserters.fromValue(json.toString()))
                 .exchangeToMono(response ->
                         response.bodyToMono(String.class)
                                 .map(stringBody -> stringBody)
                 ).block();
     }
 
-    private long nonce = System.currentTimeMillis()*10;
+    // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
+    private String getRBTCAPIAddress() throws IOException {
+
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("wallet", "exchange");
+        requestBodyMap.put("method", "RBT"); // TODO parameterize this
+        requestBodyMap.put("op_renew", 0);
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/deposit/address")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/deposit/address", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+    }
+
+    // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
+    private String getLightningInvoice() throws IOException {
+
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("wallet", "exchange");
+        requestBodyMap.put("currency", "LNX"); // TODO parameterize this
+        requestBodyMap.put("amount", 0.002);
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        JSONObject json = new JSONObject(requestBodyMap);
+        log.info("Request body: {}", json.toString());
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/deposit/invoice")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/w/deposit/invoice", nonce, requestBodyMap))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(json.toString()))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+    }
+
+    // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
+    private String getUserInfo() throws IOException {
+
+        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        return webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/r/info/user")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", generateSignature("v2/auth/r/info/user", nonce, null))
+                .contentType(MediaType.APPLICATION_JSON)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+    }
 
 
-    private String generateSignature(String apiPath, String nonce, Map<String, String> requestBodyMap) {
 
+
+    private String generateSignature(String apiPath, String nonce, Map<String, Object> requestBodyMap) {
         // let signature = `/api/${apiPath}${nonce}${
          //   JSON.stringify(body)}`
 // Consists of the complete url, nonce, and request body
-        JSONObject json = new JSONObject(requestBodyMap);
-        String signature = "/api/" + apiPath + nonce + json;
-        String payload_sha384hmac = encryptPayload(signature, apiSecret, ALGORITHM_HMACSHA384);
-        return payload_sha384hmac;
+        if (requestBodyMap == null) {
+            String signature = "/api/" + apiPath + nonce;
+            String payload_sha384hmac = encryptPayload(signature, apiSecret, ALGORITHM_HMACSHA384);
+            return payload_sha384hmac;
+        } else {
+            JSONObject json = new JSONObject(requestBodyMap);
+            String signature = "/api/" + apiPath + nonce + json;
+            log.info("signature: {}", signature);
+            String payload_sha384hmac = encryptPayload(signature, apiSecret, ALGORITHM_HMACSHA384);
+            return payload_sha384hmac;
+        }
     }
 
     public static String encryptPayload(String text, String secretKey, String algorithm) {
