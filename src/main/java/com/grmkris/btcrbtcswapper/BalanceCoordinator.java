@@ -35,8 +35,14 @@ public class BalanceCoordinator implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        blockchainWatcher.startLNDTransactionWatcher();
-        blockchainWatcher.startBTCTransactionWatcher();
+        //blockchainWatcher.startLNDTransactionWatcher();
+        //blockchainWatcher.startBTCTransactionWatcher();
+
+        if (!balancingStatusRepository.findById(1L).isPresent()){
+            BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
+            balancingStatusRepository.saveAndFlush(balancingStatus);
+        }
+
         if (balancingEnabled) {
             this.startBalanceChecker();
         }
@@ -44,11 +50,6 @@ public class BalanceCoordinator implements CommandLineRunner {
 
     public void startBalanceChecker() throws Exception {
         log.info("Starting balance checker and checking every 1000 seconds");
-
-        if (!balancingStatusRepository.findById(1L).isPresent()){
-            BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
-            balancingStatusRepository.saveAndFlush(balancingStatus);
-        }
         TimerTask newTransactionProber = new TimerTask() {
             @Override
             public void run() {

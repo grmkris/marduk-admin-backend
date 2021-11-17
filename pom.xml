@@ -86,6 +86,25 @@
             <artifactId>h2</artifactId>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.github.jnidzwetzki/bitfinex-v2-wss-api -->
+        <dependency>
+            <groupId>com.github.jnidzwetzki</groupId>
+            <artifactId>bitfinex-v2-wss-api</artifactId>
+            <version>0.7.7</version>
+        </dependency>
+
+        <!-- https://github.com/knowm/XChange -->
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-core</artifactId>
+            <version>5.0.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-bitfinex</artifactId>
+            <version>5.0.12</version>
+        </dependency>
+
     </dependencies>
 
     <build>
