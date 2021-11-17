@@ -198,6 +198,14 @@ public class BitfinexHandler {
     }
 
 
+    private String sellBTCforRBTC() {
+        return "";
+    }
+
+    private String sellRBTCforBTC() {
+        return "";
+    }
+
 
 
     private String generateSignature(String apiPath, String nonce, Map<String, Object> requestBodyMap) {
