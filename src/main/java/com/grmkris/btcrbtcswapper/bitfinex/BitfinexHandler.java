@@ -82,34 +82,23 @@ public class BitfinexHandler {
         // var result = this.withdrawRBTC();
         // log.info("Withdraw rbtc, {}", result);
 
-        var result = this.withdrawLightning();
-        log.info("Withdraw lightning, {}", result);
+        //var result = this.withdrawLightning();
+        //log.info("Withdraw lightning, {}", result);
     }
 
-    private void getWalletBalance() throws IOException {
+    public AccountInfo getWalletBalance() throws IOException {
         // Get the account information
         AccountService accountService = bitfinex.getAccountService();
         AccountInfo accountInfo = accountService.getAccountInfo();
         log.info(accountInfo.toString());
+        return accountInfo;
     }
 
-    private String getBitcoinDepositAddress() throws IOException {
-        Currency currency = Currency.getInstance("BTC");
-        var result = bitfinex.getAccountService().requestDepositAddress(currency);
-        return  result;
-    }
-
-    private String getRBTCDepositAddress() throws IOException {
-        Currency currency = Currency.getInstanceNoCreate("RBT");
-        var result = bitfinex.getAccountService().requestDepositAddress(currency);
-        return  result;
-    }
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
-    private String getBitcoinAPIAddress() throws IOException {
-
+    public String getBitcoinAPIAddress() throws IOException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
-        requestBodyMap.put("method", "Bitcoin"); // TODO parameterize this
+        requestBodyMap.put("method", "Bitcoin");
         requestBodyMap.put("op_renew", 0);
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
@@ -130,11 +119,11 @@ public class BitfinexHandler {
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
-    private String getRBTCAPIAddress() throws IOException {
+    public String getRBTCAPIAddress() throws IOException {
 
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
-        requestBodyMap.put("method", "RBT"); // TODO parameterize this
+        requestBodyMap.put("method", "RBT");
         requestBodyMap.put("op_renew", 0);
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
@@ -155,12 +144,12 @@ public class BitfinexHandler {
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
-    private String getLightningInvoice() throws IOException {
+    public String getLightningInvoice(Double amount) throws IOException {
 
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
-        requestBodyMap.put("currency", "LNX"); // TODO parameterize this
-        requestBodyMap.put("amount", 0.002);
+        requestBodyMap.put("currency", "LNX");
+        requestBodyMap.put("amount", amount);
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -180,7 +169,7 @@ public class BitfinexHandler {
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
-    private String getUserInfo() throws IOException {
+    public String getUserInfo() throws IOException {
 
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
@@ -198,14 +187,14 @@ public class BitfinexHandler {
     }
 
 
-    private String tradeRBTCforBTC() {
+    public String tradeRBTCforBTC(String amount) {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("type", "EXCHANGE MARKET");
         requestBodyMap.put("symbol", "tRBTBTC");
-        //requestBodyMap.put("price", 0.002);
-        requestBodyMap.put("amount", "-0.00006"); // TODO parameterize amount
+        requestBodyMap.put("amount", "-"+amount);
         requestBodyMap.put("flags", 0);
-        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        // TODO meta: {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        // https://docs.bitfinex.com/reference#rest-auth-submit-order
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -224,14 +213,14 @@ public class BitfinexHandler {
                 ).block();
     }
 
-    private String tradeBTCforRBTC() {
+    public String tradeBTCforRBTC(String amount) {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("type", "EXCHANGE MARKET");
         requestBodyMap.put("symbol", "tRBTBTC");
-        //requestBodyMap.put("price", 0.002);
-        requestBodyMap.put("amount", "0.00006"); // TODO parameterize amount
+        requestBodyMap.put("amount", amount);
         requestBodyMap.put("flags", 0);
-        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        // TODO meta: {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        // https://docs.bitfinex.com/reference#rest-auth-submit-order
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -250,14 +239,13 @@ public class BitfinexHandler {
                 ).block();
     }
 
-    private String convertBTCToLightning() {
+    public String convertBTCToLightning(String amount) {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("from", "exchange");
         requestBodyMap.put("to", "exchange");
         requestBodyMap.put("currency", "BTC");
-        requestBodyMap.put("currency_to", "LNX"); // TODO parameterize amount
-        requestBodyMap.put("amount", "0.00006");
-        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        requestBodyMap.put("currency_to", "LNX");
+        requestBodyMap.put("amount", amount);
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -276,13 +264,11 @@ public class BitfinexHandler {
                 ).block();
     }
 
-    public String withdrawLightning() {
+    public String withdrawLightning(String invoice) {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
         requestBodyMap.put("method", "LNX");
-        //requestBodyMap.put("amount", "6000");
-        requestBodyMap.put("invoice", "lnbc60u1pse2nappp5gx0p9ehm2zk843dte0s2mr5m2d87y7xme39c5fdx2p82ts6zmc5sdqgw9chzut3xqyjw5qcqpjsp5ezp7p5smtgxw8f3l86whtg4sr5l4t0l2m0d5dxlyvtm9e0fqsuqsrzjqwwpe4vgx9ngul7jhz0l92t0ap5ywr3kp6qn7l70ylchqd6wvy2azz5v5qqq23gqqyqqqqlgqqqqqqgq9q9qy9qsqqdzu2meskq20j49ek3v72s75jsd2lxq3juzvlymjfnqjexv93qnxnk4aqut8musv33ep56dxy3ej2czgh3edmurnnwwv5gmpxr4ej0gqjxm9re"); // TODO parameterize amount
-        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        requestBodyMap.put("invoice", invoice);
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -301,11 +287,11 @@ public class BitfinexHandler {
                 ).block();
     }
 
-    public String withdrawRBTC() {
+    public String withdrawRBTC(String amount) {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
         requestBodyMap.put("method", "RBT");
-        requestBodyMap.put("amount", "0.00006");
+        requestBodyMap.put("amount", amount);
         requestBodyMap.put("address", "0x0Cf84F01C311Dc093969136B1814F05B5b3167F6"); // TODO parameterize amount
         // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
@@ -329,9 +315,6 @@ public class BitfinexHandler {
 
 
     private String generateSignature(String apiPath, String nonce, Map<String, Object> requestBodyMap) {
-        // let signature = `/api/${apiPath}${nonce}${
-         //   JSON.stringify(body)}`
-// Consists of the complete url, nonce, and request body
         if (requestBodyMap == null) {
             String signature = "/api/" + apiPath + nonce;
             String payload_sha384hmac = encryptPayload(signature, apiSecret, ALGORITHM_HMACSHA384);
@@ -345,7 +328,7 @@ public class BitfinexHandler {
         }
     }
 
-    public static String encryptPayload(String text, String secretKey, String algorithm) {
+    private static String encryptPayload(String text, String secretKey, String algorithm) {
         String encryptedText = null;
         try {
             SecretKeySpec key = new SecretKeySpec((secretKey).getBytes("UTF-8"), algorithm);
