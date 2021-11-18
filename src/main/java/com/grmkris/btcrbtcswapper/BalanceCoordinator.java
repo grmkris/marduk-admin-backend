@@ -1,6 +1,7 @@
 package com.grmkris.btcrbtcswapper;
 
 import com.grmkris.btcrbtcswapper.bitfinex.BitfinexHandler;
+import com.grmkris.btcrbtcswapper.bitfinex.BitfinexWatcher;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
@@ -31,6 +32,7 @@ public class BalanceCoordinator implements CommandLineRunner {
     private final LndHandler lndHandler;
     private final RskHandler rskHandler;
     private final BlockchainWatcher blockchainWatcher;
+    private final BitfinexWatcher bitfinexWatcher;
     private final BalancingStatusRepository balancingStatusRepository;
     private final BitfinexHandler bitfinexHandler;
 
@@ -38,6 +40,7 @@ public class BalanceCoordinator implements CommandLineRunner {
     public void run(String... args) throws Exception {
         //blockchainWatcher.startLNDTransactionWatcher();
         //blockchainWatcher.startBTCTransactionWatcher();
+        bitfinexWatcher.startBitfinexTransactionWatcher();
 
         if (!balancingStatusRepository.findById(1L).isPresent()){
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
@@ -109,12 +112,21 @@ public class BalanceCoordinator implements CommandLineRunner {
         rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
     }
 
-    private void startBitfinexPeginProcess(BigDecimal loopAmount) throws IOException {
+    private void startBitfinexPeginProcess(BigDecimal amount) throws IOException {
         var balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
         balancingStatusRepository.save(balancingStatus);
         String bitfinexAddress = bitfinexHandler.getRBTCAPIAddress();
-        rskHandler.sendRBTCtoAddress(loopAmount, bitfinexAddress);
+        rskHandler.sendRBTCtoAddress(amount, bitfinexAddress);
+        //rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
+    }
+
+    private void startBitfinexPegoutProcess(BigDecimal amount) throws IOException {
+        var balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGOUT);
+        balancingStatusRepository.save(balancingStatus);
+        String bitfinexInvoice = bitfinexHandler.getLightningInvoice(amount);
+        lndHandler.payInvoice(bitfinexInvoice);
         //rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
     }
 

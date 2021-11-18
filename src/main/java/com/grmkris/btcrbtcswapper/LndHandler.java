@@ -191,4 +191,28 @@ public class LndHandler {
     public List<String> getCurrentLoopOutList(){
         return this.getCurrentLoopOutList();
     }
+
+    public void payInvoice(String invoice) {
+
+        Map<String, String> requestBodyMap = new HashMap<>();
+        //requestBodyMap.put("dest", destination);
+        //requestBodyMap.put("amt", value.toString());
+        //requestBodyMap.put("payment_hash", max_swap_fee);
+        //requestBodyMap.put("final_cltv_delta", max_swap_routing_fee);
+        requestBodyMap.put("payment_request", invoice);
+        requestBodyMap.put("timeout_seconds", "100");
+        requestBodyMap.put("fee_limit_sat", "1000");
+
+        log.info("Paying invoice: {}", invoice);
+        String responseBody = webClient.post()
+                .uri(lndRestEndpoint+ "/v2/router/send")
+                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(requestBodyMap), Map.class)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+        log.info("Paid invoice: {}", responseBody);
+    }
 }

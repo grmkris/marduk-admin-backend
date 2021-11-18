@@ -3,13 +3,6 @@ package com.grmkris.btcrbtcswapper.bitfinex;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketClient;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketConfiguration;
-import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderBookEntry;
-import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexWallet;
-import com.github.jnidzwetzki.bitfinex.v2.entity.currency.BitfinexCurrencyPair;
-import com.github.jnidzwetzki.bitfinex.v2.manager.OrderbookManager;
-import com.github.jnidzwetzki.bitfinex.v2.manager.WalletManager;
-import com.github.jnidzwetzki.bitfinex.v2.symbol.BitfinexOrderBookSymbol;
-import com.github.jnidzwetzki.bitfinex.v2.symbol.BitfinexSymbols;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import io.netty.handler.logging.LogLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.web3j.crypto.Wallet;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
@@ -32,15 +24,12 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 // https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java/blob/master/EXAMPLES.md
 @Component
@@ -70,33 +59,6 @@ public class BitfinexHandler {
 
         this.bitfinexClient = BitfinexClientFactory.newSimpleClient(config);
         bitfinexClient.connect();
-
-        // log.info("Getting bitfinex account info");
-        // this.getWalletBalance();
-        // var result = this.getBitcoinAPIAddress();
-        // log.info("Retrieved bitcoin network deposit address from bitfinex: \r\n {}", result);
-
-        // result = this.getUserInfo();
-        // log.info("Retrieved userinfo {} ", result);
-        // var result1 = this.getRBTCDepositAddress();
-        // log.info("Retrieved rbtc network deposit address from bitfinex: \r\n {}", result1);
-
-        // result = this.getLightningInvoice();
-        // log.info("Retrieved lightning invoice {} ", result);
-
-        // var result = this.tradeRBTCforBTC();
-        // log.info("Created the trade {}", result);
-
-        // result = this.convertBTCToLightning();
-        // log.info("Converted btc to lnx, {}", result);
-
-        // var result = this.withdrawRBTC();
-        // log.info("Withdraw rbtc, {}", result);
-
-        //var result = this.withdrawLightning();
-        //log.info("Withdraw lightning, {}", result);
-        log.info("Starting bitfinex watcher");
-        watchBitfinexDeposits();
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
@@ -149,7 +111,7 @@ public class BitfinexHandler {
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
-    public String getLightningInvoice(Double amount) throws IOException {
+    public String getLightningInvoice(BigDecimal amount) throws IOException {
 
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
@@ -359,45 +321,6 @@ public class BitfinexHandler {
             log.info("NoSuchAlgorithmException: "+e.getMessage());
         }
         return encryptedText;
-    }
-
-    public void watchBitfinexDeposits(){
-        TimerTask newTransactionProber = new TimerTask() {
-            public void run() {
-                log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
-                var walletList = bitfinexClient.getWalletManager().getWallets();
-                var rbtWallet = walletList.stream()
-                        .filter(wallet -> wallet.getWalletType().equals(BitfinexWallet.Type.EXCHANGE)
-                                && wallet.getCurrency().equals("RBT")).findFirst();
-                var lnxWallet = walletList.stream()
-                        .filter(wallet -> wallet.getWalletType().equals(BitfinexWallet.Type.EXCHANGE)
-                                && wallet.getCurrency().equals("LNX")).findFirst();
-
-                log.info("RBT wallet: {}", rbtWallet.get().getBalance());
-                log.info("LNX wallet: {}", lnxWallet.get().getBalance());
-
-            }
-        };
-
-        Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(newTransactionProber, 10000L, 10000L);
-
-
-    }
-
-    public void watchBitfinexOrderBook(){
-        BitfinexCurrencyPair.registerDefaults();
-        final BitfinexOrderBookSymbol orderbookConfiguration = BitfinexSymbols.orderBook(
-                BitfinexCurrencyPair.of("BTC","USD"), BitfinexOrderBookSymbol.Precision.P0, BitfinexOrderBookSymbol.Frequency.F0, 25);
-
-        final OrderbookManager orderbookManager = bitfinexClient.getOrderbookManager();
-
-        final BiConsumer<BitfinexOrderBookSymbol, BitfinexOrderBookEntry> callback = (orderbookConfig, entry) -> {
-            log.info("Got entry {} for orderbook {}}", entry, orderbookConfig);
-        };
-
-        orderbookManager.registerOrderbookCallback(orderbookConfiguration, callback);
-        orderbookManager.subscribeOrderbook(orderbookConfiguration);
     }
 
 }

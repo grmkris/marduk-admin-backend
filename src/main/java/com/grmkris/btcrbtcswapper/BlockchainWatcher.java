@@ -25,7 +25,8 @@ public class BlockchainWatcher {
     private BigDecimal btcWalletBalance;
     private BigInteger lndOnchainWalletBalance;
 
-    public void startBTCTransactionWatcher() throws MalformedURLException {
+    // THIS IS CHECKING BTC WALLET BALANCE THAT IS DERVIED FROM RSK WALLET
+    public void startBTCTransactionWatcher() {
         btcWalletBalance = btcHandler.getBtcWalletBalance();
         TimerTask newTransactionProber = new TimerTask() {
             public void run() {
@@ -33,7 +34,6 @@ public class BlockchainWatcher {
                 if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
                     return;
                 }
-                //log.info("Service status: {} Probing for new Bitcoin transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var newBtcWalletBalance = btcHandler.getBtcWalletBalance();
                 var amountToSend= newBtcWalletBalance.subtract(btcWalletBalance);
                 if (newBtcWalletBalance.compareTo(btcWalletBalance) > 0){
@@ -63,6 +63,7 @@ public class BlockchainWatcher {
     }
 
     // periodically check lightning wallet balance, if it increases send the dela amount through loopin
+    // THIS IS CHECKING ONCHAIN LIGHTNING WALLET BALANCE
     public void startLNDTransactionWatcher(){
         lndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
         TimerTask newTransactionProber = new TimerTask() {
@@ -71,7 +72,6 @@ public class BlockchainWatcher {
                 if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) || balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)) {
                     return;
                 }
-                //log.debug("Service status: {} Probing for new Lightning onchain transaction every 100 seconds", balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var newlndOnchainWalletBalance = lndHandler.getLightningOnChainBalance();
                 if (newlndOnchainWalletBalance.compareTo(lndOnchainWalletBalance) > 0){
                     var amount = newlndOnchainWalletBalance.subtract(lndOnchainWalletBalance);
