@@ -26,8 +26,8 @@ public class BalanceCoordinator implements CommandLineRunner {
     @Value("${btc.wallet.public.key}")
     private String btcPublicKey;
 
-    @Value("${balancing.enabled}")
-    private Boolean balancingEnabled;
+    @Value("${balancing.mode}")
+    private String balancingMode; // none, powpeg, bitfinex
 
     private final LndHandler lndHandler;
     private final RskHandler rskHandler;
@@ -38,17 +38,21 @@ public class BalanceCoordinator implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        //blockchainWatcher.startLNDTransactionWatcher();
-        //blockchainWatcher.startBTCTransactionWatcher();
-        bitfinexWatcher.startBitfinexTransactionWatcher();
 
-        if (!balancingStatusRepository.findById(1L).isPresent()){
+        if (!balancingStatusRepository.findById(1L).isPresent()) {
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
 
-        if (balancingEnabled) {
+        if (!balancingMode.equals("none")) {
             this.startBalanceChecker();
+            if (balancingMode.equals("powpeg")) {
+                blockchainWatcher.startBTCTransactionWatcher();
+                blockchainWatcher.startLNDTransactionWatcher();
+            }
+            if (balancingMode.equals("bitfinex")) {
+                bitfinexWatcher.startBitfinexTransactionWatcher();
+            }
         }
     }
 
@@ -73,9 +77,14 @@ public class BalanceCoordinator implements CommandLineRunner {
             // TODO parameterize ratio for balancing
             if (lndAmount.compareTo(rskAmount) < 0){
                 if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
-                    BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(lndAmount);
-                    log.info("Lightning balance below 30%, initiating rsk PEGOUT, amount: {} sats", loopAmount);
-                    startLoopInProcess(loopAmount);
+                    BigDecimal amount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(lndAmount);
+                    log.info("Lightning balance below 30%, initiating rsk PEGOUT, amount: {} sats", amount);
+                    if (balancingMode.equals("powpeg")) {
+                        startPeginProcess(amount);
+                    }
+                    else if (balancingMode.equals("bitfinex")) {
+                        startBitfinexPeginProcess(amount);
+                    }
                 }
                 else {
                     log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
@@ -84,9 +93,14 @@ public class BalanceCoordinator implements CommandLineRunner {
                 if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) == -1){
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
-                    BigDecimal loopAmount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
-                    log.info("RSK balance below 30%, initiating rsk PEGIN, amount: {} sats", loopAmount);
-                    startLoopOutProcess(loopAmount);
+                    BigDecimal amount = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP).subtract(rskAmount);
+                    log.info("RSK balance below 30%, initiating rsk PEGIN, amount: {} sats", amount);
+                    if (balancingMode.equals("powpeg")) {
+                        startPegoutProcess(amount);
+                    }
+                    else if (balancingMode.equals("bitfinex")) {
+                        startBitfinexPegoutProcess(amount);
+                    }
                 }
                 else {
                     log.info("No need for balancing, lnd balance: {}, rsk balance: {} ", lndAmount, rskAmount);
@@ -105,29 +119,11 @@ public class BalanceCoordinator implements CommandLineRunner {
     4.  It should monitor lnd for new transactions and once it is confirmed it should initiate a loopin
     5. it shoudl monitor the loopin swap to see if it was sucesfull
     */
-    private void startLoopInProcess(BigDecimal loopAmount){
+    private void startPeginProcess(BigDecimal loopAmount){
         var balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
         balancingStatusRepository.save(balancingStatus);
         rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
-    }
-
-    private void startBitfinexPeginProcess(BigDecimal amount) throws IOException {
-        var balancingStatus = balancingStatusRepository.findById(1L).get();
-        balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
-        balancingStatusRepository.save(balancingStatus);
-        String bitfinexAddress = bitfinexHandler.getRBTCAPIAddress();
-        rskHandler.sendRBTCtoAddress(amount, bitfinexAddress);
-        //rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
-    }
-
-    private void startBitfinexPegoutProcess(BigDecimal amount) throws IOException {
-        var balancingStatus = balancingStatusRepository.findById(1L).get();
-        balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGOUT);
-        balancingStatusRepository.save(balancingStatus);
-        String bitfinexInvoice = bitfinexHandler.getLightningInvoice(amount);
-        lndHandler.payInvoice(bitfinexInvoice);
-        //rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
     }
 
     /*
@@ -136,7 +132,7 @@ public class BalanceCoordinator implements CommandLineRunner {
     /*
     currently limited to max 500k satoshi loopouts
      */
-    private void startLoopOutProcess(BigDecimal loopAmount){
+    private void startPegoutProcess(BigDecimal loopAmount){
         var balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGOUT);
         balancingStatusRepository.save(balancingStatus);
@@ -144,5 +140,31 @@ public class BalanceCoordinator implements CommandLineRunner {
             loopAmount = BigDecimal.valueOf(500000L);
         }
         lndHandler.initiateLoopOut(loopAmount.toBigInteger(), btcPublicKey);
+    }
+
+    private void startBitfinexPeginProcess(BigDecimal amount) {
+        var balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
+        balancingStatusRepository.save(balancingStatus);
+        String bitfinexAddress = null;
+        try {
+            bitfinexAddress = bitfinexHandler.getRBTCAPIAddress();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        rskHandler.sendRBTCtoAddress(amount, bitfinexAddress);
+    }
+
+    private void startBitfinexPegoutProcess(BigDecimal amount) {
+        var balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGOUT);
+        balancingStatusRepository.save(balancingStatus);
+        String bitfinexInvoice = null;
+        try {
+            bitfinexInvoice = bitfinexHandler.getLightningInvoice(amount);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        lndHandler.payInvoice(bitfinexInvoice);
     }
 }
