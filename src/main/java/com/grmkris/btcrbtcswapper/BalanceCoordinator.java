@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -106,6 +107,15 @@ public class BalanceCoordinator implements CommandLineRunner {
         balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
         balancingStatusRepository.save(balancingStatus);
         rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
+    }
+
+    private void startBitfinexPeginProcess(BigDecimal loopAmount) throws IOException {
+        var balancingStatus = balancingStatusRepository.findById(1L).get();
+        balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
+        balancingStatusRepository.save(balancingStatus);
+        String bitfinexAddress = bitfinexHandler.getRBTCAPIAddress();
+        rskHandler.sendRBTCtoAddress(loopAmount, bitfinexAddress);
+        //rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
     }
 
     /*

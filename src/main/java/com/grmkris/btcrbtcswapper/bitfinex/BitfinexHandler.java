@@ -1,16 +1,20 @@
 package com.grmkris.btcrbtcswapper.bitfinex;
 
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketClient;
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketConfiguration;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderBookEntry;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexWallet;
+import com.github.jnidzwetzki.bitfinex.v2.entity.currency.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.manager.OrderbookManager;
+import com.github.jnidzwetzki.bitfinex.v2.manager.WalletManager;
+import com.github.jnidzwetzki.bitfinex.v2.symbol.BitfinexOrderBookSymbol;
+import com.github.jnidzwetzki.bitfinex.v2.symbol.BitfinexSymbols;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import io.netty.handler.logging.LogLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.knowm.xchange.Exchange;
-import org.knowm.xchange.ExchangeFactory;
-import org.knowm.xchange.ExchangeSpecification;
-import org.knowm.xchange.bitfinex.BitfinexExchange;
-import org.knowm.xchange.currency.Currency;
-import org.knowm.xchange.dto.account.AccountInfo;
-import org.knowm.xchange.service.account.AccountService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.web3j.crypto.Wallet;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
@@ -32,6 +37,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 // https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java/blob/master/EXAMPLES.md
 @Component
@@ -45,22 +54,24 @@ public class BitfinexHandler {
     @Value("${bitfinex.secret}")
     private String apiSecret;
 
-    private Exchange bitfinex;
+    private final BalancingStatusRepository balancingStatusRepository;
     private WebClient webClient;
+    private BitfinexWebsocketClient bitfinexClient;
     @PostConstruct
     public void init() throws MalformedURLException, SSLException {
-        ExchangeSpecification exSpec = new BitfinexExchange().getDefaultExchangeSpecification();
-        exSpec.setApiKey(apiKey);
-        exSpec.setSecretKey(apiSecret);
-        bitfinex = ExchangeFactory.INSTANCE.createExchange(exSpec);
-
         HttpClient httpClient = HttpClient.create().wiretap("reactor.netty.http.client.HttpClient",
                 LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
         this.webClient = WebClient.builder().exchangeStrategies(ExchangeStrategies.builder().codecs(c ->
                 c.defaultCodecs().enableLoggingRequestDetails(true)).build()
         ).clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
-        log.info("Getting bitfinex account info");
+        final BitfinexWebsocketConfiguration config = new BitfinexWebsocketConfiguration();
+        config.setApiCredentials(apiKey, apiSecret);
+
+        this.bitfinexClient = BitfinexClientFactory.newSimpleClient(config);
+        bitfinexClient.connect();
+
+        // log.info("Getting bitfinex account info");
         // this.getWalletBalance();
         // var result = this.getBitcoinAPIAddress();
         // log.info("Retrieved bitcoin network deposit address from bitfinex: \r\n {}", result);
@@ -84,14 +95,8 @@ public class BitfinexHandler {
 
         //var result = this.withdrawLightning();
         //log.info("Withdraw lightning, {}", result);
-    }
-
-    public AccountInfo getWalletBalance() throws IOException {
-        // Get the account information
-        AccountService accountService = bitfinex.getAccountService();
-        AccountInfo accountInfo = accountService.getAccountInfo();
-        log.info(accountInfo.toString());
-        return accountInfo;
+        log.info("Starting bitfinex watcher");
+        watchBitfinexDeposits();
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
@@ -328,7 +333,7 @@ public class BitfinexHandler {
         }
     }
 
-    private static String encryptPayload(String text, String secretKey, String algorithm) {
+    private String encryptPayload(String text, String secretKey, String algorithm) {
         String encryptedText = null;
         try {
             SecretKeySpec key = new SecretKeySpec((secretKey).getBytes("UTF-8"), algorithm);
@@ -354,6 +359,45 @@ public class BitfinexHandler {
             log.info("NoSuchAlgorithmException: "+e.getMessage());
         }
         return encryptedText;
+    }
+
+    public void watchBitfinexDeposits(){
+        TimerTask newTransactionProber = new TimerTask() {
+            public void run() {
+                log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
+                var walletList = bitfinexClient.getWalletManager().getWallets();
+                var rbtWallet = walletList.stream()
+                        .filter(wallet -> wallet.getWalletType().equals(BitfinexWallet.Type.EXCHANGE)
+                                && wallet.getCurrency().equals("RBT")).findFirst();
+                var lnxWallet = walletList.stream()
+                        .filter(wallet -> wallet.getWalletType().equals(BitfinexWallet.Type.EXCHANGE)
+                                && wallet.getCurrency().equals("LNX")).findFirst();
+
+                log.info("RBT wallet: {}", rbtWallet.get().getBalance());
+                log.info("LNX wallet: {}", lnxWallet.get().getBalance());
+
+            }
+        };
+
+        Timer timer = new Timer("Timer");
+        timer.scheduleAtFixedRate(newTransactionProber, 10000L, 10000L);
+
+
+    }
+
+    public void watchBitfinexOrderBook(){
+        BitfinexCurrencyPair.registerDefaults();
+        final BitfinexOrderBookSymbol orderbookConfiguration = BitfinexSymbols.orderBook(
+                BitfinexCurrencyPair.of("BTC","USD"), BitfinexOrderBookSymbol.Precision.P0, BitfinexOrderBookSymbol.Frequency.F0, 25);
+
+        final OrderbookManager orderbookManager = bitfinexClient.getOrderbookManager();
+
+        final BiConsumer<BitfinexOrderBookSymbol, BitfinexOrderBookEntry> callback = (orderbookConfig, entry) -> {
+            log.info("Got entry {} for orderbook {}}", entry, orderbookConfig);
+        };
+
+        orderbookManager.registerOrderbookCallback(orderbookConfiguration, callback);
+        orderbookManager.subscribeOrderbook(orderbookConfiguration);
     }
 
 }
