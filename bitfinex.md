@@ -1,0 +1,1 @@
+Bitfinex minimum order size: 0.00006

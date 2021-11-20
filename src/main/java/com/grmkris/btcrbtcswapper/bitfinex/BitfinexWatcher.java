@@ -1,50 +1,37 @@
 package com.grmkris.btcrbtcswapper.bitfinex;
 
-import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketClient;
-import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketConfiguration;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexWallet;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class BitfinexWatcher {
 
+    private final BalancingStatusRepository balancingStatusRepository;
+    private final BitfinexHandler bitfinexHandler;
     @Value("${bitfinex.key}")
     private String apiKey;
     @Value("${bitfinex.secret}")
     private String apiSecret;
-
-    private final BalancingStatusRepository balancingStatusRepository;
-    private final BitfinexHandler bitfinexHandler;
-
     private BitfinexWebsocketClient bitfinexClient;
     private BigDecimal rbtLastBalance;
     private BigDecimal lnxLastBalance;
 
-    @PostConstruct
-    public void init() {
-        final BitfinexWebsocketConfiguration config = new BitfinexWebsocketConfiguration();
-        config.setApiCredentials(apiKey, apiSecret);
-        this.bitfinexClient = BitfinexClientFactory.newSimpleClient(config);
-        bitfinexClient.connect();
-    }
-
-
-    public void startBitfinexTransactionWatcher(){
+    public void startBitfinexTransactionWatcher() {
 
         var walletList = bitfinexClient.getWalletManager().getWallets();
         rbtLastBalance = walletList.stream()
@@ -55,6 +42,7 @@ public class BitfinexWatcher {
                         && wallet.getCurrency().equals("LNX")).findFirst().get().getBalance();
 
         TimerTask newTransactionProber = new TimerTask() {
+            @SneakyThrows
             public void run() {
                 log.info("Balancing status: " + balancingStatusRepository.findById(1L).get().getBalancingStatus());
                 var walletList = bitfinexClient.getWalletManager().getWallets();
@@ -69,10 +57,12 @@ public class BitfinexWatcher {
                     var amount = rbtWallet.get().getBalance().subtract(rbtLastBalance);
                     log.info("RBT balance changed, amount: {}", amount);
                     var result = bitfinexHandler.tradeRBTCforBTC(amount.toString());
-                    rbtLastBalance = rbtWallet.get().getBalance();
                     log.info("Traded RBTC for BTC, {}", result);
+                    TimeUnit.SECONDS.sleep(2);
+                    rbtLastBalance = rbtWallet.get().getBalance();
                     result = bitfinexHandler.convertBTCToLightning(amount.toString());
                     log.info("Converted BTC to Lightning, {}", result);
+                    TimeUnit.SECONDS.sleep(2);
                     result = bitfinexHandler.withdrawLightning(amount.toString());
                     log.info("Withdrew Lightning, {}", result);
                     log.info("Returning balancing status back to IDLE");
@@ -83,9 +73,11 @@ public class BitfinexWatcher {
                     log.info("LNX balance changed, amount: {}", amount);
                     var result = bitfinexHandler.convertLightningToBTC(amount.toString());
                     log.info("Converted Lightning to BTC, {}", result);
+                    TimeUnit.SECONDS.sleep(2);
                     result = bitfinexHandler.tradeBTCforRBTC(amount.toString());
-                    lnxLastBalance = lnxWallet.get().getBalance();
                     log.info("Traded BTC for RBTC, {}", result);
+                    TimeUnit.SECONDS.sleep(2);
+                    lnxLastBalance = lnxWallet.get().getBalance();
                     result = bitfinexHandler.withdrawRBTC(amount.toString());
                     log.info("Withdrew RBTC, {}", result);
                     log.info("Returning balancing status back to IDLE");
@@ -93,8 +85,7 @@ public class BitfinexWatcher {
                 }
             }
         };
-
         Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(newTransactionProber, 1000L, 1000L);
+        timer.scheduleAtFixedRate(newTransactionProber, 1000L, 10000L);
     }
 }
