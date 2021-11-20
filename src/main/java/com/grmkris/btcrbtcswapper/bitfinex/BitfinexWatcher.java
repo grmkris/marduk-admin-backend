@@ -4,6 +4,8 @@ import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketClient;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketConfiguration;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexWallet;
+import com.grmkris.btcrbtcswapper.db.BalancingStatus;
+import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,8 +66,8 @@ public class BitfinexWatcher {
                                 && wallet.getCurrency().equals("LNX")).findFirst();
 
                 if (rbtLastBalance.compareTo(rbtWallet.get().getBalance()) < 0) {
-                    log.info("RBT balance changed");
                     var amount = rbtWallet.get().getBalance().subtract(rbtLastBalance);
+                    log.info("RBT balance changed, amount: {}", amount);
                     var result = bitfinexHandler.tradeRBTCforBTC(amount.toString());
                     rbtLastBalance = rbtWallet.get().getBalance();
                     log.info("Traded RBTC for BTC, {}", result);
@@ -73,24 +75,22 @@ public class BitfinexWatcher {
                     log.info("Converted BTC to Lightning, {}", result);
                     result = bitfinexHandler.withdrawLightning(amount.toString());
                     log.info("Withdrew Lightning, {}", result);
+                    log.info("Returning balancing status back to IDLE");
+                    balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
                 }
                 if (lnxLastBalance.compareTo(lnxWallet.get().getBalance()) < 0) {
-                    log.info("LNX balance changed");
                     var amount = lnxWallet.get().getBalance().subtract(lnxLastBalance);
-                    var result = bitfinexHandler.tradeBTCforRBTC(amount.toString());
+                    log.info("LNX balance changed, amount: {}", amount);
+                    var result = bitfinexHandler.convertLightningToBTC(amount.toString());
+                    log.info("Converted Lightning to BTC, {}", result);
+                    result = bitfinexHandler.tradeBTCforRBTC(amount.toString());
                     lnxLastBalance = lnxWallet.get().getBalance();
                     log.info("Traded BTC for RBTC, {}", result);
                     result = bitfinexHandler.withdrawRBTC(amount.toString());
                     log.info("Withdrew RBTC, {}", result);
+                    log.info("Returning balancing status back to IDLE");
+                    balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
                 }
-
-
-                // if we receive RBT we need to sell it for LNX
-
-
-                log.info("RBT wallet: {}", rbtWallet.get().getBalance());
-                log.info("LNX wallet: {}", lnxWallet.get().getBalance());
-
             }
         };
 

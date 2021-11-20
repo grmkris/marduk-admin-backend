@@ -213,7 +213,7 @@ public class BitfinexHandler {
         requestBodyMap.put("currency", "BTC");
         requestBodyMap.put("currency_to", "LNX");
         requestBodyMap.put("amount", amount);
-        String nonce = String.valueOf(System.currentTimeMillis()) + "000";
+        String nonce = System.currentTimeMillis() + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
         JSONObject json = new JSONObject(requestBodyMap);
@@ -323,4 +323,30 @@ public class BitfinexHandler {
         return encryptedText;
     }
 
+    public String convertLightningToBTC(String amount) {
+
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("from", "exchange");
+        requestBodyMap.put("to", "exchange");
+        requestBodyMap.put("currency", "LNX");
+        requestBodyMap.put("currency_to", "BTC");
+        requestBodyMap.put("amount", amount);
+        String nonce = System.currentTimeMillis() + "000";
+
+        String bitfinexApiUrl = "https://api.bitfinex.com/";
+        String payload = "";
+        String signature = generateSignature("v2/auth/w/transfer", nonce, null);
+        var result = webClient.post()
+                .uri(bitfinexApiUrl+ "v2/auth/w/transfer")
+                .header("bfx-nonce", nonce)
+                .header("bfx-apikey", apiKey)
+                .header("bfx-signature", signature)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(payload))
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+        return result;
+    }
 }
