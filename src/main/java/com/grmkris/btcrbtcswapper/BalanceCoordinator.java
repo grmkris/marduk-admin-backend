@@ -75,10 +75,12 @@ public class BalanceCoordinator implements CommandLineRunner {
             BigDecimal rskAmount = new BigDecimal(rskHandler.getRskBalance());
             log.info("LND amount: {}; RSK amount: {}", lndAmount, rskAmount);
 
-            BigDecimal ratio = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP);
-            if (lndAmount.compareTo(rskAmount) < 0){
-                if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
-                    BigDecimal amount = ratio.subtract(lndAmount);
+            BigDecimal ratio = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(3), 2, RoundingMode.UP);
+            BigDecimal lndBalancedAmount = ratio.multiply(BigDecimal.valueOf(2));
+            BigDecimal rskBalancedAmount = ratio;
+            if (lndAmount.compareTo(lndBalancedAmount) < 0){
+                if (lndAmount.divide(lndBalancedAmount, 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
+                    BigDecimal amount = lndBalancedAmount.subtract(lndAmount);
                     log.info("Lightning balance below 30%, initiating {} PEGOUT, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPeginProcess(amount);
@@ -90,11 +92,11 @@ public class BalanceCoordinator implements CommandLineRunner {
                 else {
                     log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
                 }
-            } else if (lndAmount.compareTo(rskAmount) > 0) {
-                if (rskAmount.divide(lndAmount.add(rskAmount),2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
+            } else if (lndAmount.compareTo(rskBalancedAmount) > 0) {
+                if (rskAmount.divide(rskBalancedAmount,2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
-                    BigDecimal amount = ratio.subtract(rskAmount);
+                    BigDecimal amount = rskBalancedAmount.subtract(rskAmount);
                     log.info("RSK balance below 30%, initiating {} PEGIN, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPegoutProcess(amount);
