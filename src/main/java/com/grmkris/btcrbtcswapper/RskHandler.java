@@ -11,7 +11,9 @@ import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
+import org.web3j.crypto.Bip32ECKeyPair;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.MnemonicUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthCall;
@@ -26,9 +28,12 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+
+import static org.web3j.crypto.Bip32ECKeyPair.HARDENED_BIT;
 
 @Component
 @Slf4j
@@ -37,11 +42,8 @@ public class RskHandler {
     @Value("${rsk.service.url}")
     private String serverurl;
 
-    @Value("${rsk.wallet.public.key}")
-    private String rskPublicKey;
-
-    @Value("${rsk.wallet.private.key}")
-    private String rskPrivateKey;
+    @Value("${rsk.wallet.seed}")
+    private String rskWalletSeed;
 
     @Value("${rsk.bridge.address}")
     private String rskBridgeAddress;
@@ -54,77 +56,12 @@ public class RskHandler {
     @PostConstruct
     void init() {
         web3j = Web3j.build(new HttpService(serverurl));
-        if (!rskPrivateKey.equals("")){
-            //web3j  object after connecting with server for transaction
-            credentials = Credentials.create(rskPrivateKey);
-            String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
-            String publicKey = credentials.getEcKeyPair().getPublicKey().toString(16);
-            String addr = credentials.getAddress();
-            rskPublicKey = addr;
-        }
-    }
-
-    public void run(String... args) throws Exception {
-        log.info("Starting rsk service");
-        // startNewTransactionListener();
-    }
-
-    private void getBlockSize() throws IOException {
-        log.info(web3j.ethBlockNumber().send().getBlockNumber().toString());
-    }
-    private void startNewTransactionListener() {
-        //Ethereum listener started here tx is web3j transaction object described below
-        web3j.pendingTransactionFlowable().subscribe(tx -> {
-            log.info("New transaction arrived to the chain");
-            // using equalsIgnoreCase because for some reason the addresses don't match when comparing them without ignoring case
-            // probably rsk <> eth compatibilty stuff
-            if (tx.getTo().equalsIgnoreCase(rskPublicKey)){
-                log.info("Found transaction from: {}", tx.getFrom());
-                confirmTransaction(tx);
-                log.info("Transaction confirmed");
-                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGIN)){
-                    log.info("Received transaction to RSK wallet while loopin");
-                } else if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.PEGOUT)) {
-                    log.info("Received transaction to RSK wallet while loopout");
-                } else {
-                    log.info("Received transaction to RSK wallet while idling");
-                }
-            }
-        });
-    }
-
-    private void confirmTransaction(Transaction trx) {
-        log.info("Waiting for transaction to confirm");
-        final CountDownLatch latch = new CountDownLatch(1);
-        TimerTask getTransactionConfirmations = new TimerTask() {
-            public void run() {
-                if ( getTransactionConfirmations(trx) > 10 ) {
-                    latch.countDown();
-                    cancel();
-                };
-            }
-        };
-        Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(getTransactionConfirmations, 1000L, 1000L);
-        try {
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private long getTransactionConfirmations(Transaction trx) {
-        try {
-            long currentBlockNumber = web3j.ethBlockNumber().send().getBlockNumber().longValue();
-
-            long numberOfConfirmations = trx.getBlockNumberRaw() == null ? 0 : currentBlockNumber - trx.getBlockNumber().longValue();
-            log.info("Number of confirmations: {}", numberOfConfirmations);
-            return numberOfConfirmations;
-        } catch (IOException e) {
-            log.error("Error getting transaction confirmation number");
-        }
-        return 0;
+        //web3j  object after connecting with server for transaction
+        Bip32ECKeyPair masterKeypair = Bip32ECKeyPair.generateKeyPair(MnemonicUtils.generateSeed(rskWalletSeed, ""));
+        int[] path = {44 | HARDENED_BIT, 60 | HARDENED_BIT, HARDENED_BIT, 0, 0};
+        Bip32ECKeyPair  x = Bip32ECKeyPair.deriveKeyPair(masterKeypair, path);
+        credentials = Credentials.create(x);
+        log.info("address from seed: {}", credentials.getAddress());
     }
 
     public TransactionReceipt sendToRskBtcBridge(BigDecimal amount) {
@@ -151,7 +88,7 @@ public class RskHandler {
         EthGetBalance balanceWei = null;
         try {
             log.info("Retrieving rsk balance");
-            balanceWei = web3j.ethGetBalance(rskPublicKey, DefaultBlockParameterName.LATEST).sendAsync().get();
+            balanceWei = web3j.ethGetBalance(credentials.getAddress(), DefaultBlockParameterName.LATEST).sendAsync().get();
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -175,9 +112,10 @@ public class RskHandler {
             // https://mycrypto.testnet.rsk.co/
             // DATA FIELD 0x6923fa85 CAN BE FOUND on https://app.mycrypto.com/interact-with-contracts
             // interact with smart contract and check the request
+            // TODO add mainnet contract address
             response = web3j.ethCall(
                     org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
-                            rskPublicKey, "0x0000000000000000000000000000000001000006", "0x6923fa85"),
+                            credentials.getAddress(), "0x0000000000000000000000000000000001000006", "0x6923fa85"),
                             DefaultBlockParameterName.LATEST
                     ).sendAsync().get();
 
