@@ -27,7 +27,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-// https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java/blob/master/EXAMPLES.md
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -38,6 +37,8 @@ public class BitfinexHandler {
     private String apiKey;
     @Value("${bitfinex.secret}")
     private String apiSecret;
+    @Value("${rsk.wallet.public.key}")
+    private String rskWalletPublicKey;
 
     private final BalancingStatusRepository balancingStatusRepository;
     private WebClient webClient;
@@ -105,8 +106,8 @@ public class BitfinexHandler {
         requestBodyMap.put("type", "EXCHANGE MARKET");
         requestBodyMap.put("symbol", "tRBTBTC");
         requestBodyMap.put("amount", "-"+amount);
-        // TODO meta: {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
-        // https://docs.bitfinex.com/reference#rest-auth-submit-order
+        requestBodyMap.put("aff_code", "Nm-ntkbPc");
+
         String nonce = System.currentTimeMillis() + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -129,8 +130,8 @@ public class BitfinexHandler {
         requestBodyMap.put("type", "EXCHANGE MARKET");
         requestBodyMap.put("symbol", "tRBTBTC");
         requestBodyMap.put("amount", amount);
-        // TODO meta: {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
-        // https://docs.bitfinex.com/reference#rest-auth-submit-order
+        requestBodyMap.put("aff_code", "Nm-ntkbPc");
+
         String nonce = System.currentTimeMillis() + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
@@ -223,8 +224,7 @@ public class BitfinexHandler {
         requestBodyMap.put("wallet", "exchange");
         requestBodyMap.put("method", "RBT");
         requestBodyMap.put("amount", amount);
-        requestBodyMap.put("address", "0x0Cf84F01C311Dc093969136B1814F05B5b3167F6"); // TODO parameterize amount
-        // requestBodyMap.put("meta", 0.002); {aff_code: "AFF_CODE_HERE"} // optional param to pass an affiliate code
+        requestBodyMap.put("address", rskWalletPublicKey);
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
