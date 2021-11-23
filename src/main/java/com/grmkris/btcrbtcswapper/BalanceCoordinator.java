@@ -79,7 +79,7 @@ public class BalanceCoordinator implements CommandLineRunner {
             BigDecimal lndBalancedAmount = ratio.multiply(BigDecimal.valueOf(2));
             BigDecimal rskBalancedAmount = ratio;
             if (lndAmount.compareTo(lndBalancedAmount) < 0){
-                if (lndAmount.divide(lndBalancedAmount, 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
+                if (lndAmount.divide(lndBalancedAmount, 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.65)) < 0){
                     BigDecimal amount = lndBalancedAmount.subtract(lndAmount);
                     log.info("Lightning balance below 30%, initiating {} PEGOUT, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
@@ -92,8 +92,8 @@ public class BalanceCoordinator implements CommandLineRunner {
                 else {
                     log.info("No need for balancing, lnd balance: {}, rsk balance: {}", lndAmount, rskAmount);
                 }
-            } else if (lndAmount.compareTo(rskBalancedAmount) > 0) {
-                if (rskAmount.divide(rskBalancedAmount,2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
+            } else if (lndAmount.compareTo(lndBalancedAmount) > 0) {
+                if (rskAmount.divide(rskBalancedAmount,2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.65)) < 0){
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
                     BigDecimal amount = rskBalancedAmount.subtract(rskAmount);
