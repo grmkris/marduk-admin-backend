@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public class BitfinexHandler {
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
         JSONObject json = new JSONObject(requestBodyMap);
-        return webClient.post()
+        var jsonArrayresponse = webClient.post()
                 .uri(bitfinexApiUrl+ "v2/auth/w/deposit/invoice")
                 .header("bfx-nonce", nonce)
                 .header("bfx-apikey", apiKey)
@@ -92,9 +93,10 @@ public class BitfinexHandler {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(json.toString()))
                 .exchangeToMono(response ->
-                        response.bodyToMono(String.class)
+                        response.bodyToMono(ArrayList.class)
                                 .map(stringBody -> stringBody)
                 ).block();
+        return jsonArrayresponse.get(1).toString();
     }
 
     public String tradeRBTCforBTC(String amount) {

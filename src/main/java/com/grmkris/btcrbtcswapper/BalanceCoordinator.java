@@ -162,7 +162,9 @@ public class BalanceCoordinator implements CommandLineRunner {
         balancingStatusRepository.save(balancingStatus);
         String bitfinexInvoice = null;
         try {
+            log.info("Retrieving bitfinex invoice");
             bitfinexInvoice = bitfinexHandler.getLightningInvoice(amount.divide(BigDecimal.valueOf(100000000)));
+            log.info("Invoice: {}", bitfinexInvoice);
         } catch (IOException e) {
             e.printStackTrace();
         }
