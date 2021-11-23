@@ -45,8 +45,9 @@ public class BalanceCoordinator implements CommandLineRunner {
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
 
+        this.startBalanceChecker();
+
         if (!balancingMode.equals(BalancinModeEnum.none)) {
-            this.startBalanceChecker();
             if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                 blockchainWatcher.startBTCTransactionWatcher();
                 blockchainWatcher.startLNDTransactionWatcher();
@@ -74,13 +75,13 @@ public class BalanceCoordinator implements CommandLineRunner {
             log.info("Balance status: {};  Checking balance", balancingStatusRepository.findById(1L).get().getBalancingStatus());
             BigDecimal lndAmount = new BigDecimal(lndHandler.getLightningBalance());
             BigDecimal rskAmount = new BigDecimal(rskHandler.getRskBalance());
+            log.info("LND amount: {}; RSK amount: {}", lndAmount, rskAmount);
 
-            // TODO parameterize ratio for balancing
             BigDecimal ratio = lndAmount.add(rskAmount).divide(BigDecimal.valueOf(2), 2, RoundingMode.UP);
             if (lndAmount.compareTo(rskAmount) < 0){
                 if (lndAmount.divide(lndAmount.add(rskAmount), 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.4)) < 0){
                     BigDecimal amount = ratio.subtract(lndAmount);
-                    log.info("Lightning balance below 30%, initiating rsk PEGOUT, amount: {} sats", amount);
+                    log.info("Lightning balance below 30%, initiating {} PEGOUT, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPeginProcess(amount);
                     }
@@ -96,7 +97,7 @@ public class BalanceCoordinator implements CommandLineRunner {
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
                     BigDecimal amount = ratio.subtract(rskAmount);
-                    log.info("RSK balance below 30%, initiating rsk PEGIN, amount: {} sats", amount);
+                    log.info("RSK balance below 30%, initiating {} PEGIN, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPegoutProcess(amount);
                     }

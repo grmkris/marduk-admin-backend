@@ -1,5 +1,6 @@
 package com.grmkris.btcrbtcswapper.bitfinex;
 
+import com.grmkris.btcrbtcswapper.RskHandler;
 import io.netty.handler.logging.LogLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +36,8 @@ public class BitfinexHandler {
     private String apiKey;
     @Value("${bitfinex.secret}")
     private String apiSecret;
-    @Value("${rsk.wallet.public.key}")
-    private String rskWalletPublicKey;
     private WebClient webClient;
+    private final RskHandler rskHandler;
 
     @PostConstruct
     public void init(){
@@ -220,7 +220,7 @@ public class BitfinexHandler {
         requestBodyMap.put("wallet", "exchange");
         requestBodyMap.put("method", "RBT");
         requestBodyMap.put("amount", amount);
-        requestBodyMap.put("address", rskWalletPublicKey);
+        requestBodyMap.put("address", this.rskHandler.getRskAddress());
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";

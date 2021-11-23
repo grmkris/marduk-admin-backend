@@ -64,6 +64,10 @@ public class RskHandler {
         log.info("address from seed: {}", credentials.getAddress());
     }
 
+    public String getRskAddress() {
+        return credentials.getAddress();
+    }
+
     public TransactionReceipt sendToRskBtcBridge(BigDecimal amount) {
         while (true) {
             try {
