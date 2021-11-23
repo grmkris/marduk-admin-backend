@@ -164,7 +164,8 @@ public class BalanceCoordinator implements CommandLineRunner {
         balancingStatusRepository.save(balancingStatus);
         String bitfinexInvoice = null;
         try {
-            var lnAmount = amount.setScale(0, RoundingMode.DOWN).divide(BigDecimal.valueOf(100000000), RoundingMode.DOWN);
+            var amountInteger = amount.toBigInteger().toString();
+            var lnAmount = BigDecimal.valueOf(Long.valueOf(amountInteger)).divide(BigDecimal.valueOf(100000000));
             log.info("Retrieving bitfinex invoice, amount: {}", lnAmount);
 
             bitfinexInvoice = bitfinexHandler.getLightningInvoice(lnAmount);
