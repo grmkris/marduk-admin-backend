@@ -45,6 +45,7 @@ public class BalanceCoordinator implements CommandLineRunner {
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
 
+        startBitfinexPegoutProcess(BigDecimal.valueOf(521330.00));
         this.startBalanceChecker();
 
         if (!balancingMode.equals(BalancinModeEnum.none)) {
@@ -164,7 +165,7 @@ public class BalanceCoordinator implements CommandLineRunner {
         balancingStatusRepository.save(balancingStatus);
         String bitfinexInvoice = null;
         try {
-            bitfinexInvoice = bitfinexHandler.getLightningInvoice(amount);
+            bitfinexInvoice = bitfinexHandler.getLightningInvoice(amount.divide(BigDecimal.valueOf(100000000)));
         } catch (IOException e) {
             e.printStackTrace();
         }
