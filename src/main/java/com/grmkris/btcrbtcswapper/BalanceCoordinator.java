@@ -44,10 +44,7 @@ public class BalanceCoordinator implements CommandLineRunner {
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
-
-        startBitfinexPegoutProcess(BigDecimal.valueOf(521330.00));
         this.startBalanceChecker();
-
         if (!balancingMode.equals(BalancinModeEnum.none)) {
             if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                 blockchainWatcher.startBTCTransactionWatcher();
