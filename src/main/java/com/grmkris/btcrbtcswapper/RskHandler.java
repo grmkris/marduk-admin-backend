@@ -131,11 +131,9 @@ public class RskHandler {
         while (true) {
             try {
                 log.info("Sending {} sats to BTCSwapContract: {}", amount, rskBridgeAddress);
-                TransactionReceipt transactionReceipt = Transfer.sendFunds(
-                        web3j, credentials, rskBridgeAddress,
-                        amount, Convert.Unit.GWEI).sendAsync().get();
-                log.info("Sent {} sats to BTCSwapContract: {}, transaction hash: {}", amount, rskBridgeAddress, transactionReceipt.getTransactionHash());
-                return transactionReceipt;
+                var result = this.sendRBTCtoAddress(amount, rskBridgeAddress);
+                log.info("Sent {} sats to BTCSwapContract: {}, transaction hash: {}", amount, rskBridgeAddress, result.getTransactionHash());
+                return result;
             } catch (Exception e) {
                 log.warn("Error while sending funds to BTCSwapContract");
                 log.warn(e.getMessage());
@@ -198,14 +196,14 @@ public class RskHandler {
     public TransactionReceipt sendRBTCtoAddress(BigDecimal amount, String address) {
         while (true) {
             try {
-                log.info("Sending {} sats to BTCSwapContract: {}", amount, rskBridgeAddress);
+                log.info("Sending {} sats to address: {}", amount, address);
                 TransactionReceipt transactionReceipt = Transfer.sendFunds(
                         web3j, credentials, address,
                         amount, Convert.Unit.GWEI).sendAsync().get();
-                log.info("Sent {} sats to BTCSwapContract: {}, transaction hash: {}", amount, rskBridgeAddress, transactionReceipt.getTransactionHash());
+                log.info("Sent {} sats to address: {}, transaction hash: {}", amount, address, transactionReceipt.getTransactionHash());
                 return transactionReceipt;
             } catch (Exception e) {
-                log.warn("Error while sending funds to BTCSwapContract");
+                log.warn("Error while sending funds to address {}", address);
                 log.warn(e.getMessage());
                 try {
                     log.warn("Retrying in 10 seconds");

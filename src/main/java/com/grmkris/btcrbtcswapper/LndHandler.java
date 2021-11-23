@@ -195,10 +195,6 @@ public class LndHandler {
     public void payInvoice(String invoice) {
 
         Map<String, String> requestBodyMap = new HashMap<>();
-        //requestBodyMap.put("dest", destination);
-        //requestBodyMap.put("amt", value.toString());
-        //requestBodyMap.put("payment_hash", max_swap_fee);
-        //requestBodyMap.put("final_cltv_delta", max_swap_routing_fee);
         requestBodyMap.put("payment_request", invoice);
         requestBodyMap.put("timeout_seconds", "100");
         requestBodyMap.put("fee_limit_sat", "1000");

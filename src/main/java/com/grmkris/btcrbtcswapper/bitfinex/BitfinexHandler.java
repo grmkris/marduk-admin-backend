@@ -1,7 +1,5 @@
 package com.grmkris.btcrbtcswapper.bitfinex;
 
-import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketClient;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import io.netty.handler.logging.LogLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +37,8 @@ public class BitfinexHandler {
     private String apiSecret;
     @Value("${rsk.wallet.public.key}")
     private String rskWalletPublicKey;
-
-    private final BalancingStatusRepository balancingStatusRepository;
     private WebClient webClient;
-    private BitfinexWebsocketClient bitfinexClient;
+
     @PostConstruct
     public void init(){
         HttpClient httpClient = HttpClient.create().wiretap("reactor.netty.http.client.HttpClient",

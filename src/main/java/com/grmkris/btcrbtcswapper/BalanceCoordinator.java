@@ -43,7 +43,6 @@ public class BalanceCoordinator implements CommandLineRunner {
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
-        log.info(bitfinexHandler.tradeRBTCforBTC("0.00006"));
         if (!balancingMode.equals("none")) {
             this.startBalanceChecker();
             if (balancingMode.equals("powpeg")) {
