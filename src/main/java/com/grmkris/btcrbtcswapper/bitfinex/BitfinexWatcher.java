@@ -74,11 +74,11 @@ public class BitfinexWatcher {
                     if (balancingStatusRepository.findById(1L).get().getBalancingStatus() == BalancingStatusEnum.PEGIN) {
                         var result = bitfinexHandler.tradeRBTCforBTC(amount.toString());
                         log.info("Traded RBTC for BTC, {}", result);
-                        TimeUnit.SECONDS.sleep(10);
+                        TimeUnit.SECONDS.sleep(5);
                         rbtLastBalance = rbtWallet.get().getBalance();
                         result = bitfinexHandler.convertBTCToLightning(amount.toString());
                         log.info("Converted BTC to Lightning, {}", result);
-                        TimeUnit.SECONDS.sleep(10);
+                        TimeUnit.SECONDS.sleep(60);
                         result = bitfinexHandler.withdrawLightning(amount.toString());
                         log.info("Withdrew Lightning, {}", result);
                         log.info("Returning balancing status back to IDLE");
