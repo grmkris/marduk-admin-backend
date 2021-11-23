@@ -96,6 +96,7 @@ public class BitfinexHandler {
                         response.bodyToMono(ArrayList.class)
                                 .map(stringBody -> stringBody)
                 ).block();
+        log.info("Bitfinex Lightning invoice response: {}", jsonArrayresponse.toString());
         return jsonArrayresponse.get(1).toString();
     }
 
