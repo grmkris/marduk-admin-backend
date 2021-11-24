@@ -83,7 +83,7 @@ public class BalanceCoordinator implements CommandLineRunner {
             if (lndAmount.compareTo(lndBalancedAmount) < 0){
                 if (lndAmount.divide(lndBalancedAmount, 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.65)) < 0){
                     BigDecimal amount = lndBalancedAmount.subtract(lndAmount);
-                    log.info("Lightning balance below 30%, initiating {} PEGOUT, amount: {} sats", balancingMode, amount);
+                    log.info("Lightning balance below 30%, initiating {} PEGIN, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPeginProcess(amount);
                     }
@@ -99,7 +99,7 @@ public class BalanceCoordinator implements CommandLineRunner {
                     // Calulating amount to loopout:
                     // (lndAmount + rskAmount) / 2 - rskAmount
                     BigDecimal amount = rskBalancedAmount.subtract(rskAmount);
-                    log.info("RSK balance below 30%, initiating {} PEGIN, amount: {} sats", balancingMode, amount);
+                    log.info("RSK balance below 30%, initiating {} PEGOUT, amount: {} sats", balancingMode, amount);
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPegoutProcess(amount);
                     }
