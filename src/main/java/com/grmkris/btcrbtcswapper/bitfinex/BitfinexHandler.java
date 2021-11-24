@@ -50,7 +50,7 @@ public class BitfinexHandler {
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
-    public String getRBTCAPIAddress() throws IOException {
+    public String getRBTCAddress() throws IOException {
 
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("wallet", "exchange");
@@ -61,7 +61,7 @@ public class BitfinexHandler {
         String bitfinexApiUrl = "https://api.bitfinex.com/";
         JSONObject json = new JSONObject(requestBodyMap);
         log.info("Request body: {}", json.toString());
-        return webClient.post()
+        var jsonArrayResponse = webClient.post()
                 .uri(bitfinexApiUrl+ "v2/auth/w/deposit/address")
                 .header("bfx-nonce", nonce)
                 .header("bfx-apikey", apiKey)
@@ -69,9 +69,13 @@ public class BitfinexHandler {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(json.toString()))
                 .exchangeToMono(response ->
-                        response.bodyToMono(String.class)
+                        response.bodyToMono(ArrayList.class)
                                 .map(stringBody -> stringBody)
                 ).block();
+        log.info("Bitfinex RSK address response: {}", jsonArrayResponse.toString());
+        ArrayList<String> stringBody = (ArrayList<String>) jsonArrayResponse.get(4);
+        log.info("Bitfinex RSK address: {}", stringBody.get(4));
+        return stringBody.get(4);
     }
 
     // https://www.example-code.com/java/bitfinex_v2_rest_user_info.asp
@@ -85,7 +89,7 @@ public class BitfinexHandler {
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
         JSONObject json = new JSONObject(requestBodyMap);
-        var jsonArrayresponse = webClient.post()
+        var jsonArrayResponse = webClient.post()
                 .uri(bitfinexApiUrl+ "v2/auth/w/deposit/invoice")
                 .header("bfx-nonce", nonce)
                 .header("bfx-apikey", apiKey)
@@ -96,8 +100,8 @@ public class BitfinexHandler {
                         response.bodyToMono(ArrayList.class)
                                 .map(stringBody -> stringBody)
                 ).block();
-        log.info("Bitfinex Lightning invoice response: {}", jsonArrayresponse.toString());
-        return jsonArrayresponse.get(1).toString();
+        log.info("Bitfinex Lightning invoice response: {}", jsonArrayResponse.toString());
+        return jsonArrayResponse.get(1).toString();
     }
 
     public String tradeRBTCforBTC(String amount) {

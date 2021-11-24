@@ -151,7 +151,7 @@ public class BalanceCoordinator implements CommandLineRunner {
         balancingStatusRepository.save(balancingStatus);
         String bitfinexAddress = null;
         try {
-            bitfinexAddress = bitfinexHandler.getRBTCAPIAddress();
+            bitfinexAddress = bitfinexHandler.getRBTCAddress();
         } catch (IOException e) {
             e.printStackTrace();
         }
