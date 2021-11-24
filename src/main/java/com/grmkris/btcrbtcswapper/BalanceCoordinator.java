@@ -46,7 +46,7 @@ public class BalanceCoordinator implements CommandLineRunner {
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
-
+        mailgunService.sendEmail("Balance Coordinator Started", "Balance Coordinator Started");
         this.startBalanceChecker();
         if (!balancingMode.equals(BalancinModeEnum.none)) {
             if (balancingMode.equals(BalancinModeEnum.powpeg)) {

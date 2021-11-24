@@ -17,6 +17,8 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLException;
 
+import java.util.Optional;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Service
@@ -47,15 +49,15 @@ public class MailgunService {
     }
 
     public String sendEmail(String subject, String body) {
-        System.out.println("Sending email with subject " + subject + " and body " + body);
-
+        System.out.println("Sending email with subject " + subject + " and body " + body);;
         return webClient.post()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
                         .host(mailGunUrl)
                         .path("/v3/" + mailgunBaseUrl + ".mailgun.org/messages")
                         .queryParam("from", "rbtc-swapper" + email)
-                        .queryParam("to", email + ","   + email1)
+                        .queryParam("to", email)
+                        .queryParamIfPresent("to", Optional.ofNullable(email1))
                         .queryParam("subject", subject)
                         .queryParam("text", body)
                         .build())
