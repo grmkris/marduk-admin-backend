@@ -25,6 +25,7 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -210,5 +211,25 @@ public class LndHandler {
                                 .map(stringBody -> stringBody)
                 ).block();
         log.info("Paid invoice: {}", responseBody);
+    }
+
+    public String getLightningInvoice(BigDecimal amount) {
+        Map<String, String> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("value", amount.toString());
+        requestBodyMap.put("expiry", "3600");
+        requestBodyMap.put("cltv_expiry", "1");
+
+        log.info("Creating lightning invoice");
+        String responseBody = webClient.post()
+                .uri(lndRestEndpoint+ "/v1/invoices")
+                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(requestBodyMap), Map.class)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).block();
+        log.info("Created lightning invoice: {}", responseBody);
+        return responseBody;
     }
 }

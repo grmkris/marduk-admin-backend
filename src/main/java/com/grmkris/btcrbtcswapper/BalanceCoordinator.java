@@ -44,6 +44,8 @@ public class BalanceCoordinator implements CommandLineRunner {
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
+
+        log.info(lndHandler.getLightningInvoice(BigDecimal.valueOf(10000L)));
         this.startBalanceChecker();
         if (!balancingMode.equals(BalancinModeEnum.none)) {
             if (balancingMode.equals(BalancinModeEnum.powpeg)) {

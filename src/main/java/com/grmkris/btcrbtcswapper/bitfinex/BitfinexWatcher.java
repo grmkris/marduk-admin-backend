@@ -6,6 +6,7 @@ import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketConfiguration;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexWallet;
 import com.github.jnidzwetzki.bitfinex.v2.entity.currency.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.currency.BitfinexCurrencyType;
+import com.grmkris.btcrbtcswapper.LndHandler;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
@@ -28,6 +29,7 @@ public class BitfinexWatcher {
 
     private final BalancingStatusRepository balancingStatusRepository;
     private final BitfinexHandler bitfinexHandler;
+    private final LndHandler lndHandler;
     @Value("${bitfinex.key}")
     private String apiKey;
     @Value("${bitfinex.secret}")
@@ -79,7 +81,8 @@ public class BitfinexWatcher {
                         result = bitfinexHandler.convertBTCToLightning(amount.toString());
                         log.info("Converted BTC to Lightning, {}", result);
                         TimeUnit.SECONDS.sleep(60);
-                        result = bitfinexHandler.withdrawLightning(amount.toString());
+                        String invoice = lndHandler.getLightningInvoice(amount);
+                        result = bitfinexHandler.withdrawLightning(invoice);
                         log.info("Withdrew Lightning, {}", result);
                         log.info("Returning balancing status back to IDLE");
                         balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
