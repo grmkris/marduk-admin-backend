@@ -6,6 +6,7 @@ import com.grmkris.btcrbtcswapper.db.BalancinModeEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
+import com.grmkris.btcrbtcswapper.notification.MailgunService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,7 @@ public class BalanceCoordinator implements CommandLineRunner {
     private final BitfinexWatcher bitfinexWatcher;
     private final BalancingStatusRepository balancingStatusRepository;
     private final BitfinexHandler bitfinexHandler;
+    private final MailgunService mailgunService;
 
     @Override
     public void run(String... args) {
@@ -45,7 +47,6 @@ public class BalanceCoordinator implements CommandLineRunner {
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
 
-        log.info(lndHandler.getLightningInvoice(BigDecimal.valueOf(10000L)));
         this.startBalanceChecker();
         if (!balancingMode.equals(BalancinModeEnum.none)) {
             if (balancingMode.equals(BalancinModeEnum.powpeg)) {
@@ -84,6 +85,7 @@ public class BalanceCoordinator implements CommandLineRunner {
                 if (lndAmount.divide(lndBalancedAmount, 2, RoundingMode.UP).compareTo(BigDecimal.valueOf(0.65)) < 0){
                     BigDecimal amount = lndBalancedAmount.subtract(lndAmount);
                     log.info("Lightning balance below 30%, initiating {} PEGIN, amount: {} sats", balancingMode, amount);
+                    mailgunService.sendEmail("rbtc-btc-swapper Lightning balance below 30%","Lightning balance below 30%, initiating " + balancingMode + " PEGIN, amount: " + amount + " sats");
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPeginProcess(amount);
                     }
@@ -100,6 +102,7 @@ public class BalanceCoordinator implements CommandLineRunner {
                     // (lndAmount + rskAmount) / 2 - rskAmount
                     BigDecimal amount = rskBalancedAmount.subtract(rskAmount);
                     log.info("RSK balance below 30%, initiating {} PEGOUT, amount: {} sats", balancingMode, amount);
+                    mailgunService.sendEmail("rbtc-btc-swapper RSK balance below 30%","Lightning balance below 30%, initiating " + balancingMode + " PEGOUT, amount: " + amount + " sats");
                     if (balancingMode.equals(BalancinModeEnum.powpeg)) {
                         startPegoutProcess(amount);
                     }

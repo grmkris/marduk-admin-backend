@@ -10,6 +10,7 @@ import com.grmkris.btcrbtcswapper.LndHandler;
 import com.grmkris.btcrbtcswapper.db.BalancingStatus;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
 import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
+import com.grmkris.btcrbtcswapper.notification.MailgunService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class BitfinexWatcher {
     private final BalancingStatusRepository balancingStatusRepository;
     private final BitfinexHandler bitfinexHandler;
     private final LndHandler lndHandler;
+    private final MailgunService mailgunService;
     @Value("${bitfinex.key}")
     private String apiKey;
     @Value("${bitfinex.secret}")
@@ -73,6 +75,7 @@ public class BitfinexWatcher {
                 if (rbtLastBalance.compareTo(rbtWallet.get().getBalance()) < 0) {
                     var amount = rbtWallet.get().getBalance().subtract(rbtLastBalance);
                     log.info("RBT balance changed, amount: {}", amount);
+
                     if (balancingStatusRepository.findById(1L).get().getBalancingStatus() == BalancingStatusEnum.PEGIN) {
                         var result = bitfinexHandler.tradeRBTCforBTC(amount.toString());
                         log.info("Traded RBTC for BTC, {}", result);
@@ -86,6 +89,7 @@ public class BitfinexWatcher {
                         log.info("Withdrew Lightning, {}", result);
                         log.info("Returning balancing status back to IDLE");
                         balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
+                        mailgunService.sendEmail("Balancing status changed to IDLE", "Withdrew Lightning from bitfinex" + result);
                     }
                 }
                 if (lnxLastBalance.compareTo(lnxWallet.get().getBalance()) < 0) {
@@ -103,6 +107,7 @@ public class BitfinexWatcher {
                         log.info("Withdrew RBTC, {}", result);
                         log.info("Returning balancing status back to IDLE");
                         balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
+                        mailgunService.sendEmail("Balancing status changed to IDLE", "Withdrew RBTC from bitfinex" + result);
                     }
                 }
             }
