@@ -217,7 +217,7 @@ public class LndHandler {
         Map<String, String> requestBodyMap = new HashMap<>();
         requestBodyMap.put("value", amount.toString());
         requestBodyMap.put("expiry", "3600");
-        requestBodyMap.put("cltv_expiry", "1");
+        //requestBodyMap.put("cltv_expiry", "1");
 
         log.info("Creating lightning invoice");
         String responseBody = webClient.post()
