@@ -27,6 +27,7 @@ import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -220,16 +221,16 @@ public class LndHandler {
         //requestBodyMap.put("cltv_expiry", "1");
 
         log.info("Creating lightning invoice");
-        String responseBody = webClient.post()
+        var responseBody = webClient.post()
                 .uri(lndRestEndpoint+ "/v1/invoices")
                 .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBodyMap), Map.class)
                 .exchangeToMono(response ->
-                        response.bodyToMono(String.class)
+                        response.bodyToMono(Map.class)
                                 .map(stringBody -> stringBody)
                 ).block();
         log.info("Created lightning invoice: {}", responseBody);
-        return responseBody;
+        return responseBody.get("payment_request").toString();
     }
 }
