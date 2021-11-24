@@ -223,7 +223,8 @@ public class BitfinexHandler {
         requestBodyMap.put("wallet", "exchange");
         requestBodyMap.put("method", "RBT");
         requestBodyMap.put("amount", amount);
-        requestBodyMap.put("address", this.rskHandler.getRskAddress());
+        requestBodyMap.put("address", "0xf20123853941CDE094b4840F95afEEc2F2b36df0");
+        // requestBodyMap.put("address", this.rskHandler.getRskAddress()); // TODO parametrize the address with correct casing
         String nonce = String.valueOf(System.currentTimeMillis()) + "000";
 
         String bitfinexApiUrl = "https://api.bitfinex.com/";
