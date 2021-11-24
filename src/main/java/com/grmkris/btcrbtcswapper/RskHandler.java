@@ -141,7 +141,7 @@ public class RskHandler {
                 log.info("Sending {} sats to address: {}", amount, address);
                 TransactionReceipt transactionReceipt = Transfer.sendFunds(
                         web3j, credentials, address,
-                        amount, Convert.Unit.GWEI).sendAsync().get();
+                        amount.multiply(BigDecimal.TEN), Convert.Unit.GWEI).sendAsync().get();
                 log.info("Sent {} sats to address: {}, transaction hash: {}", amount, address, transactionReceipt.getTransactionHash());
                 return transactionReceipt;
             } catch (Exception e) {
