@@ -30,6 +30,8 @@ public class MailgunService {
     private String mailgunBaseUrl;
     @Value("${mailgun.email}")
     private String email;
+    @Value("${mailgun.email1}")
+    private String email1;
 
     @PostConstruct
     public void init() throws SSLException {
@@ -53,7 +55,7 @@ public class MailgunService {
                         .host(mailGunUrl)
                         .path("/v3/" + mailgunBaseUrl + ".mailgun.org/messages")
                         .queryParam("from", "rbtc-swapper" + email)
-                        .queryParam("to", email)
+                        .queryParam("to", email + ","   + email1)
                         .queryParam("subject", subject)
                         .queryParam("text", body)
                         .build())
