@@ -4,9 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grmkris.btcrbtcswapper.db.BalancingStatus;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -27,7 +24,6 @@ import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +53,6 @@ public class LndHandler {
     private String max_prepay_amt;
     @Value("${lnd.loop.max_miner_fee}")
     private String max_miner_fee;
-
-    private final BalancingStatusRepository balancingStatusRepository;
 
     private WebClient webClient;
 

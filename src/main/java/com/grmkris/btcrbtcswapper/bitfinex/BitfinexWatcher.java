@@ -81,7 +81,7 @@ public class BitfinexWatcher {
                         result = bitfinexHandler.convertBTCToLightning(amount.toString());
                         log.info("Converted BTC to Lightning, {}", result);
                         TimeUnit.SECONDS.sleep(60);
-                        String invoice = lndHandler.getLightningInvoice(amount);
+                        String invoice = lndHandler.getLightningInvoice(amount.multiply(BigDecimal.valueOf(100000000)));
                         result = bitfinexHandler.withdrawLightning(invoice);
                         log.info("Withdrew Lightning, {}", result);
                         log.info("Returning balancing status back to IDLE");
