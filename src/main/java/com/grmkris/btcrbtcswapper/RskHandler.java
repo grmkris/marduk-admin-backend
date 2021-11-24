@@ -1,7 +1,5 @@
 package com.grmkris.btcrbtcswapper;
 
-import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,19 +16,21 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
-import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.*;
+import org.web3j.tx.Transfer;
 import org.web3j.utils.Convert;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.web3j.crypto.Bip32ECKeyPair.HARDENED_BIT;
@@ -50,14 +50,13 @@ public class RskHandler {
 
     private Web3j web3j;
     private Credentials credentials;
-    private final BalancingStatusRepository balancingStatusRepository;
-
 
     @PostConstruct
-    void init() {
+    void init() throws IOException {
         web3j = Web3j.build(new HttpService(serverurl));
-        //web3j  object after connecting with server for transaction
-        Bip32ECKeyPair masterKeypair = Bip32ECKeyPair.generateKeyPair(MnemonicUtils.generateSeed(rskWalletSeed, ""));
+
+        String seed = new String(Files.readAllBytes(Paths.get(rskWalletSeed)));
+        Bip32ECKeyPair masterKeypair = Bip32ECKeyPair.generateKeyPair(MnemonicUtils.generateSeed(seed, ""));
         int[] path = {44 | HARDENED_BIT, 60 | HARDENED_BIT, HARDENED_BIT, 0, 0};
         Bip32ECKeyPair  x = Bip32ECKeyPair.deriveKeyPair(masterKeypair, path);
         credentials = Credentials.create(x);
