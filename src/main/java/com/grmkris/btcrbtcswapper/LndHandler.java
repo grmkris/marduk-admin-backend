@@ -208,7 +208,7 @@ public class LndHandler {
         log.info("Paid invoice: {}", responseBody);
     }
 
-    public String getLightningInvoice(BigDecimal amount) {
+    public String getLightningInvoice(BigInteger amount) {
         Map<String, String> requestBodyMap = new HashMap<>();
         requestBodyMap.put("value", amount.toString());
         requestBodyMap.put("expiry", "3600");
