@@ -82,6 +82,7 @@ public class BitfinexWatcher {
                         log.info("Traded RBTC for BTC, {}", result);
                         TimeUnit.SECONDS.sleep(5);
                         rbtLastBalance = rbtWallet.get().getBalance();
+                        amount = amount.multiply(new BigDecimal("0.995")); // 0.5% "fee" to account for the bitfinex trading fees
                         result = bitfinexHandler.convertBTCToLightning(amount.toString());
                         log.info("Converted BTC to Lightning, {}", result);
                         TimeUnit.SECONDS.sleep(60);
@@ -100,6 +101,7 @@ public class BitfinexWatcher {
                         var result = bitfinexHandler.convertLightningToBTC(amount.toString());
                         log.info("Converted Lightning to BTC, {}", result);
                         TimeUnit.SECONDS.sleep(5);
+                        amount = amount.multiply(new BigDecimal("0.995")); // 0.5% "fee" to account for the bitfinex trading fees
                         result = bitfinexHandler.tradeBTCforRBTC(amount.toString());
                         log.info("Traded BTC for RBTC, {}", result);
                         TimeUnit.SECONDS.sleep(60);
