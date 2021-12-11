@@ -64,6 +64,9 @@ public class BitfinexWatcher {
         TimerTask newTransactionProber = new TimerTask() {
             @SneakyThrows
             public void run() {
+                if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
+                    return;
+                }
                 var walletList = bitfinexClient.getWalletManager().getWallets();
                 var rbtWallet = walletList.stream()
                         .filter(wallet -> wallet.getWalletType().equals(BitfinexWallet.Type.EXCHANGE)
