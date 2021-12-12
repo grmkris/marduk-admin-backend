@@ -1,3 +1,7 @@
+## Code
+- https://github.com/grmkris/marduk-admin-frontend
+- https://github.com/grmkris/marduk-admin-backend
+
 ## Description
 This service main purpose is to be a "balancing" tool for lnsov bridge.  
 The lnsov bridge is an exchange that offers rbtc / lightning swaps. It should maintain ~50% of funds in lightning wallet and 50% funds in rsk wallet.  
