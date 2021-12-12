@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.grmkris</groupId>
-    <artifactId>btc-rbtc-swapper</artifactId>
+    <artifactId>marduk-admin-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>btc-rbtc-swapper</name>
-    <description>btc-rbtc-swapper</description>
+    <name>marduk-admin-backend</name>
+    <description>marduk-admin-backend</description>
     <properties>
         <java.version>11</java.version>
     </properties>
