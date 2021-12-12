@@ -1,16 +1,15 @@
-package com.grmkris.btcrbtcswapper.bitfinex;
+package com.grmkris.mardukadmin.bitfinex;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketClient;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexWebsocketConfiguration;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexWallet;
 import com.github.jnidzwetzki.bitfinex.v2.entity.currency.BitfinexCurrencyPair;
-import com.github.jnidzwetzki.bitfinex.v2.entity.currency.BitfinexCurrencyType;
-import com.grmkris.btcrbtcswapper.LndHandler;
-import com.grmkris.btcrbtcswapper.db.BalancingStatus;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
-import com.grmkris.btcrbtcswapper.notification.MailgunService;
+import com.grmkris.mardukadmin.LndHandler;
+import com.grmkris.mardukadmin.db.BalancingStatus;
+import com.grmkris.mardukadmin.db.BalancingStatusEnum;
+import com.grmkris.mardukadmin.db.BalancingStatusRepository;
+import com.grmkris.mardukadmin.notification.MailgunService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;

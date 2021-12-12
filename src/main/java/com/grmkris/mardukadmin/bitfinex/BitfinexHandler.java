@@ -1,6 +1,6 @@
-package com.grmkris.btcrbtcswapper.bitfinex;
+package com.grmkris.mardukadmin.bitfinex;
 
-import com.grmkris.btcrbtcswapper.RskHandler;
+import com.grmkris.mardukadmin.RskHandler;
 import io.netty.handler.logging.LogLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

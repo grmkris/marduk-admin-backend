@@ -1,4 +1,4 @@
-package com.grmkris.btcrbtcswapper;
+package com.grmkris.mardukadmin;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

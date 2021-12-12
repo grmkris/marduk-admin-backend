@@ -1,4 +1,4 @@
-package com.grmkris.btcrbtcswapper.db;
+package com.grmkris.mardukadmin.db;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

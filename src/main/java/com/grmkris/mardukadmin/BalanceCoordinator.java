@@ -1,12 +1,12 @@
-package com.grmkris.btcrbtcswapper;
+package com.grmkris.mardukadmin;
 
-import com.grmkris.btcrbtcswapper.bitfinex.BitfinexHandler;
-import com.grmkris.btcrbtcswapper.bitfinex.BitfinexWatcher;
-import com.grmkris.btcrbtcswapper.db.BalancinModeEnum;
-import com.grmkris.btcrbtcswapper.db.BalancingStatus;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusEnum;
-import com.grmkris.btcrbtcswapper.db.BalancingStatusRepository;
-import com.grmkris.btcrbtcswapper.notification.MailgunService;
+import com.grmkris.mardukadmin.bitfinex.BitfinexHandler;
+import com.grmkris.mardukadmin.bitfinex.BitfinexWatcher;
+import com.grmkris.mardukadmin.db.BalancinModeEnum;
+import com.grmkris.mardukadmin.db.BalancingStatus;
+import com.grmkris.mardukadmin.db.BalancingStatusEnum;
+import com.grmkris.mardukadmin.db.BalancingStatusRepository;
+import com.grmkris.mardukadmin.notification.MailgunService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

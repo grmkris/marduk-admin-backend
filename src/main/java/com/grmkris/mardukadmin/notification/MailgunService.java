@@ -1,4 +1,4 @@
-package com.grmkris.btcrbtcswapper.notification;
+package com.grmkris.mardukadmin.notification;
 
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;

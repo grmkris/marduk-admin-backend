@@ -1,4 +1,4 @@
-package com.grmkris.btcrbtcswapper.db;
+package com.grmkris.mardukadmin.db;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
