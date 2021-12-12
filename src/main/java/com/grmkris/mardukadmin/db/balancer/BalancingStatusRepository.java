@@ -1,4 +1,4 @@
-package com.grmkris.mardukadmin.db;
+package com.grmkris.mardukadmin.db.balancer;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

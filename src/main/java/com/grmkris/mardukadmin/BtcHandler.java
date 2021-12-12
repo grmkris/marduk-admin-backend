@@ -1,6 +1,6 @@
 package com.grmkris.mardukadmin;
 
-import com.grmkris.mardukadmin.db.BalancingStatusRepository;
+import com.grmkris.mardukadmin.db.balancer.BalancingStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

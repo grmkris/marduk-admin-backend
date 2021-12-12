@@ -1,4 +1,4 @@
-package com.grmkris.mardukadmin.db;
+package com.grmkris.mardukadmin.db.balancer;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

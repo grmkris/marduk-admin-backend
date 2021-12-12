@@ -105,3 +105,11 @@ lnd.loop.admin.macaroon=${LND_LOOP_ADMIN_MACAROON}
 ### BTC
 - https://bitcoinj.org/working-with-the-wallet#learning-about-changes
 - https://bitcoin.stackexchange.com/questions/70063/how-do-i-parse-the-zeromq-messages-in-java
+
+
+Multiple databases:
+- https://www.baeldung.com/spring-data-jpa-multiple-databases
+ReadOnly access:
+- https://www.baeldung.com/spring-data-read-only-repository
+Sqlite3:
+- https://www.baeldung.com/spring-boot-sqlite
