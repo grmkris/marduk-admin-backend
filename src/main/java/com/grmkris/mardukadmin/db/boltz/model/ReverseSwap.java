@@ -1,4 +1,4 @@
-package com.grmkris.mardukadmin.db.boltz;
+package com.grmkris.mardukadmin.db.boltz.model;
 
 import lombok.NonNull;
 
@@ -7,7 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.math.BigDecimal;
 
-@Entity
+@Entity(name = "reverseSwaps")
 public class ReverseSwap {
     @Id
     @Column(name = "id", nullable = false)

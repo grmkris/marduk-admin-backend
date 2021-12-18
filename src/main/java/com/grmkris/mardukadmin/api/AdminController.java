@@ -1,7 +1,9 @@
 package com.grmkris.mardukadmin.api;
 
-import com.grmkris.mardukadmin.db.boltz.ReverseSwap;
-import com.grmkris.mardukadmin.db.boltz.Swap;
+import com.grmkris.mardukadmin.db.boltz.model.ReverseSwap;
+import com.grmkris.mardukadmin.db.boltz.model.Swap;
+import com.grmkris.mardukadmin.db.boltz.repository.ReverseSwapRepository;
+import com.grmkris.mardukadmin.db.boltz.repository.SwapRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
