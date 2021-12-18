@@ -93,18 +93,6 @@
             <version>0.7.7</version>
         </dependency>
 
-        <!-- https://github.com/knowm/XChange -->
-        <dependency>
-            <groupId>org.knowm.xchange</groupId>
-            <artifactId>xchange-core</artifactId>
-            <version>5.0.12</version>
-        </dependency>
-        <dependency>
-            <groupId>org.knowm.xchange</groupId>
-            <artifactId>xchange-bitfinex</artifactId>
-            <version>5.0.12</version>
-        </dependency>
-
     </dependencies>
 
     <build>
