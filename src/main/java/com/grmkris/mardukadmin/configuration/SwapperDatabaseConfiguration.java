@@ -20,7 +20,7 @@ import java.util.HashMap;
 @Configuration
 @PropertySource({ "classpath:application.properties" })
 @EnableJpaRepositories(
-        basePackages = "com.grmkris.mardukadmin.api",
+        basePackages = "com.grmkris.mardukadmin.db.balancer",
         entityManagerFactoryRef = "productEntityManager",
         transactionManagerRef = "productTransactionManager"
 )
@@ -42,7 +42,7 @@ public class SwapperDatabaseConfiguration {
                 = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
         em.setPackagesToScan(
-                "com.grmkris.mardukadmin.db");
+                "com.grmkris.mardukadmin.db.balancer");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

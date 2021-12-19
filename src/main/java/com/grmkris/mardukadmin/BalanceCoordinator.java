@@ -6,6 +6,7 @@ import com.grmkris.mardukadmin.db.balancer.BalancinModeEnum;
 import com.grmkris.mardukadmin.db.balancer.BalancingStatus;
 import com.grmkris.mardukadmin.db.balancer.BalancingStatusEnum;
 import com.grmkris.mardukadmin.db.balancer.BalancingStatusRepository;
+import com.grmkris.mardukadmin.db.boltz.repository.SwapRepository;
 import com.grmkris.mardukadmin.notification.MailgunService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +39,12 @@ public class BalanceCoordinator implements CommandLineRunner {
     private final BalancingStatusRepository balancingStatusRepository;
     private final BitfinexHandler bitfinexHandler;
     private final MailgunService mailgunService;
+    private final SwapRepository swapRepository;
 
     @Override
     public void run(String... args) {
-
+        var swaps = swapRepository.findAll();
+        log.info("Swaps: {}", swaps.get(0));
         if (balancingStatusRepository.findById(1L).isEmpty()) {
             BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
             balancingStatusRepository.saveAndFlush(balancingStatus);
@@ -72,7 +75,7 @@ public class BalanceCoordinator implements CommandLineRunner {
     }
 
     private void balanceChecker(){
-        if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
+        if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE) && !balancingMode.equals(BalancinModeEnum.none)) {
             log.info("Balance status: {};  Checking balance", balancingStatusRepository.findById(1L).get().getBalancingStatus());
             BigDecimal lndAmount = new BigDecimal(lndHandler.getLightningBalance());
             BigDecimal rskAmount = new BigDecimal(rskHandler.getRskBalance());

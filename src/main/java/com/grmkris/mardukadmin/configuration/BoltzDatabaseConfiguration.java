@@ -21,7 +21,7 @@ import java.util.HashMap;
 @Configuration
 @PropertySource({ "classpath:application.properties" })
 @EnableJpaRepositories(
-        basePackages = "com.grmkris.mardukadmin.api",
+        basePackages = "com.grmkris.mardukadmin.db.boltz",
         entityManagerFactoryRef = "userEntityManager",
         transactionManagerRef = "userTransactionManager"
 )
@@ -44,16 +44,16 @@ public class BoltzDatabaseConfiguration {
                 = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(boltzDataSource());
         em.setPackagesToScan(
-                "com.grmkris.mardukadmin.db");
+                "com.grmkris.mardukadmin.db.boltz");
 
         HibernateJpaVendorAdapter vendorAdapter
                 = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto",
-                env.getProperty("hibernate.hbm2ddl.auto"));
+                "none");
         properties.put("hibernate.dialect",
-                env.getProperty("hibernate.dialect"));
+             "org.hibernate.dialect.SQLiteDialect");
         em.setJpaPropertyMap(properties);
 
         return em;
