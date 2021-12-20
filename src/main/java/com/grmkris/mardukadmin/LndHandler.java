@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @Slf4j
@@ -182,6 +183,36 @@ public class LndHandler {
         log.info("Retrieved Lightning balance: {}", localbalance);
         return BigInteger.valueOf(Long.parseLong(localbalance));
     }
+
+    // spring webclient retrieve result, modify and return mono
+    public Mono<BigInteger> getLightningBalanceReactive() {
+        log.info("Retrieving lightning balance");
+        return webClient.get()
+                .uri(lndRestEndpoint+ "/v1/balance/channels")
+                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                .exchangeToMono(response ->
+                        response.bodyToMono(String.class)
+                                .map(stringBody -> stringBody)
+                ).map(balance -> {
+                    String localbalance = "0";
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode node = mapper.readTree(balance);
+                        localbalance  = node.get("local_balance").get("sat").asText();
+                    } catch (JsonMappingException e) {
+                        e.printStackTrace();
+                        log.error("Error parsing lnd api /v1/balance/channels");
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                        log.error("Error parsing lnd api /v1/balance/channels");
+                    }
+                    log.info("Retrieved Lightning balance: {}", localbalance);
+                    return BigInteger.valueOf(Long.parseLong(localbalance));
+                });
+    }
+
+
+
 
     public List<String> getCurrentLoopOutList(){
         return this.getCurrentLoopOutList();
