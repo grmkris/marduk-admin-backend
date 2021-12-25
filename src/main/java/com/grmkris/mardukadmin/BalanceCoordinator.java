@@ -46,7 +46,7 @@ public class BalanceCoordinator implements CommandLineRunner {
         var swaps = swapRepository.findAll();
         log.info("Swaps: {}", swaps.get(0));
         if (balancingStatusRepository.findById(1L).isEmpty()) {
-            BalancingStatus balancingStatus = new BalancingStatus(1L, BalancingStatusEnum.IDLE);
+            BalancingStatus balancingStatus = BalancingStatus.builder().id(1L).balancingStatus(BalancingStatusEnum.IDLE).balancinModeEnum(balancingMode).build();
             balancingStatusRepository.saveAndFlush(balancingStatus);
         }
         mailgunService.sendEmail("Balance Coordinator Started", "Balance Coordinator Started");
@@ -133,6 +133,8 @@ public class BalanceCoordinator implements CommandLineRunner {
     private void startPeginProcess(BigDecimal loopAmount){
         var balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
+        balancingStatus.setAmount(loopAmount);
+        balancingStatus.setStatus("Starting loopin process, sending to rskBtcBtcSwapContract");
         balancingStatusRepository.save(balancingStatus);
         rskHandler.sendToRskBtcBridge(loopAmount.multiply(BigDecimal.TEN));
     }
@@ -156,11 +158,15 @@ public class BalanceCoordinator implements CommandLineRunner {
     private void startBitfinexPeginProcess(BigDecimal amount) {
         var balancingStatus = balancingStatusRepository.findById(1L).get();
         balancingStatus.setBalancingStatus(BalancingStatusEnum.PEGIN);
+        balancingStatus.setAmount(amount);
+        balancingStatus.setStatus("Starting loopin process, sending to bitfinex");
         balancingStatusRepository.save(balancingStatus);
         String bitfinexAddress = null;
         try {
             bitfinexAddress = bitfinexHandler.getRBTCAddress();
         } catch (IOException e) {
+            balancingStatus.setStatus("Error retrieving bitfinex address");
+            balancingStatusRepository.save(balancingStatus);
             e.printStackTrace();
         }
         rskHandler.sendRBTCtoAddress(amount, bitfinexAddress);
