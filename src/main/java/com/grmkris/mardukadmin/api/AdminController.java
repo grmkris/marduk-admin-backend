@@ -9,6 +9,7 @@ import com.grmkris.mardukadmin.db.boltz.model.Swap;
 import com.grmkris.mardukadmin.db.boltz.repository.ReverseSwapRepository;
 import com.grmkris.mardukadmin.db.boltz.repository.SwapRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +26,7 @@ Admin controller has API for retrieving current balance of all wallets that the 
  */
 @RestController
 @AllArgsConstructor
+@CrossOrigin("*")
 public class AdminController {
 
     private final SwapRepository swapRepository;
