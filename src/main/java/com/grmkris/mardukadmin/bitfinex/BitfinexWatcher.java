@@ -91,7 +91,10 @@ public class BitfinexWatcher {
                         result = bitfinexHandler.withdrawLightning(invoice);
                         log.info("Withdrew Lightning, {}", result);
                         log.info("Returning balancing status back to IDLE");
-                        balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
+                        var balancingStatus = balancingStatusRepository.findById(1L).get();
+                        balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
+                        balancingStatus.setAmount(BigDecimal.ZERO);
+                        balancingStatusRepository.saveAndFlush(balancingStatus);
                         mailgunService.sendEmail("Balancing status changed to IDLE", "Withdrew Lightning from bitfinex" + result);
                     }
                 }
@@ -110,7 +113,10 @@ public class BitfinexWatcher {
                         result = bitfinexHandler.withdrawRBTC(amount.toString());
                         log.info("Withdrew RBTC, {}", result);
                         log.info("Returning balancing status back to IDLE");
-                        balancingStatusRepository.saveAndFlush(new BalancingStatus(1L, BalancingStatusEnum.IDLE));
+                        var balancingStatus = balancingStatusRepository.findById(1L).get();
+                        balancingStatus.setBalancingStatus(BalancingStatusEnum.IDLE);
+                        balancingStatus.setAmount(BigDecimal.ZERO);
+                        balancingStatusRepository.saveAndFlush(balancingStatus);
                         mailgunService.sendEmail("Balancing status changed to IDLE", "Withdrew RBTC from bitfinex" + result);
                     }
                 }
