@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -22,8 +21,8 @@ import java.util.HashMap;
 @PropertySource({ "classpath:application.properties" })
 @EnableJpaRepositories(
         basePackages = "com.grmkris.mardukadmin.db.boltz",
-        entityManagerFactoryRef = "userEntityManager",
-        transactionManagerRef = "userTransactionManager"
+        entityManagerFactoryRef = "boltzEntityManager",
+        transactionManagerRef = "boltzTransactionManager"
 )
 public class BoltzDatabaseConfiguration {
 
@@ -39,7 +38,7 @@ public class BoltzDatabaseConfiguration {
 
     @Bean
     @Primary
-    public LocalContainerEntityManagerFactoryBean userEntityManager() {
+    public LocalContainerEntityManagerFactoryBean boltzEntityManager() {
         LocalContainerEntityManagerFactoryBean em
                 = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(boltzDataSource());
@@ -61,12 +60,12 @@ public class BoltzDatabaseConfiguration {
 
     @Primary
     @Bean
-    public PlatformTransactionManager userTransactionManager() {
+    public PlatformTransactionManager boltzTransactionManager() {
 
         JpaTransactionManager transactionManager
                 = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(
-                userEntityManager().getObject());
+                boltzEntityManager().getObject());
         return transactionManager;
     }
 }

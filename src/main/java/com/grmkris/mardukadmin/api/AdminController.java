@@ -2,6 +2,7 @@ package com.grmkris.mardukadmin.api;
 
 import com.grmkris.mardukadmin.LndHandler;
 import com.grmkris.mardukadmin.RskHandler;
+import com.grmkris.mardukadmin.db.balancer.BalancingStatus;
 import com.grmkris.mardukadmin.db.balancer.BalancingStatusRepository;
 import com.grmkris.mardukadmin.db.boltz.model.ReverseSwap;
 import com.grmkris.mardukadmin.db.boltz.model.Swap;
@@ -11,8 +12,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigInteger;
@@ -60,8 +59,8 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/admin/status", method = RequestMethod.GET)
-    public String getStatus() {
-        return balancingStatusRepository.findById(1L).get().getBalancingStatus().toString();
+    public BalancingStatus getStatus() {
+        return balancingStatusRepository.findById(1L).get();
     }
 }
 

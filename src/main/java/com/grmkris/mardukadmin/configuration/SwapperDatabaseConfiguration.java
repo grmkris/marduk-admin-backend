@@ -10,7 +10,9 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -21,8 +23,8 @@ import java.util.HashMap;
 @PropertySource({ "classpath:application.properties" })
 @EnableJpaRepositories(
         basePackages = "com.grmkris.mardukadmin.db.balancer",
-        entityManagerFactoryRef = "productEntityManager",
-        transactionManagerRef = "productTransactionManager"
+        entityManagerFactoryRef = "swapperEntityManager",
+        transactionManagerRef = "swapperTransactionManager"
 )
 public class SwapperDatabaseConfiguration {
 
@@ -37,32 +39,33 @@ public class SwapperDatabaseConfiguration {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean productEntityManager() {
+    public LocalContainerEntityManagerFactoryBean swapperEntityManager() {
         LocalContainerEntityManagerFactoryBean em
                 = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
         em.setPackagesToScan(
                 "com.grmkris.mardukadmin.db.balancer");
 
-        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-        em.setJpaVendorAdapter(vendorAdapter);
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto",
-                env.getProperty("hibernate.hbm2ddl.auto"));
-        properties.put("hibernate.dialect",
-                env.getProperty("hibernate.dialect"));
-        em.setJpaPropertyMap(properties);
-
+        em.setJpaVendorAdapter(jpaVendorAdapter());
         return em;
     }
 
     @Bean
-    public PlatformTransactionManager productTransactionManager() {
+    public JpaVendorAdapter jpaVendorAdapter() {
+        HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
+        hibernateJpaVendorAdapter.setShowSql(true);
+        hibernateJpaVendorAdapter.setGenerateDdl(true); //Auto creating scheme when true
+        hibernateJpaVendorAdapter.setDatabase(Database.H2);//Database type
+        return hibernateJpaVendorAdapter;
+    }
+
+    @Bean
+    public PlatformTransactionManager swapperTransactionManager() {
 
         JpaTransactionManager transactionManager
                 = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(
-                productEntityManager().getObject());
+                swapperEntityManager().getObject());
         return transactionManager;
     }
 
