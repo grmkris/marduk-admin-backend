@@ -161,13 +161,19 @@ public class LndHandler {
 
     public BigInteger getLightningBalance() {
         log.info("Retrieving lightning balance");
-        String responseBody = webClient.get()
-                .uri(lndRestEndpoint+ "/v1/balance/channels")
-                .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
-                .exchangeToMono(response ->
-                        response.bodyToMono(String.class)
-                                .map(stringBody -> stringBody)
-                ).block();
+        String responseBody = "";
+        try {
+            responseBody = webClient.get()
+                    .uri(lndRestEndpoint+ "/v1/balance/channels")
+                    .header("Grpc-Metadata-macaroon", lndAdminMacaroon)
+                    .exchangeToMono(response ->
+                            response.bodyToMono(String.class)
+                                    .map(stringBody -> stringBody)
+                    ).block();
+        } catch (Exception e) {
+            log.error("Error retrieving lightning balance");
+            e.printStackTrace();
+        }
         String localbalance = "0";
         try {
             ObjectMapper mapper = new ObjectMapper();
