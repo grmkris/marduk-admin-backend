@@ -35,32 +35,32 @@ public class AdminController {
     private final RskHandler rskHandler;
     private final LndHandler lndHandler;
 
-    @RequestMapping(value = "/admin/swaps", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/swaps", method = RequestMethod.GET)
     public List<Swap> getSwaps() {
         return swapRepository.findAll();
     }
 
-    @RequestMapping(value = "/admin/swaps/reverse", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/swaps/reverse", method = RequestMethod.GET)
     public List<ReverseSwap> getReverseSwaps() {
         return reverseSwapRepository.findAll();
     }
 
-    @RequestMapping(value = "/admin/lnd/balance", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/lnd/balance", method = RequestMethod.GET)
     public Mono<BigInteger> getLndBalance() {
         return lndHandler.getLightningBalanceReactive();
     }
 
-    @RequestMapping(value = "/admin/rbtc/balance", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/rbtc/balance", method = RequestMethod.GET)
     public BigInteger getRskBalance() {
         return rskHandler.getRskBalance();
     }
 
-    @RequestMapping(value = "/admin/profit", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/profit", method = RequestMethod.GET)
     public String getProfit() {
         return null;
     }
 
-    @RequestMapping(value = "/admin/status", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/status", method = RequestMethod.GET)
     public BalancingStatus getStatus() {
         return balancingStatusRepository.findById(1L).get();
     }
