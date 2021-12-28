@@ -65,6 +65,8 @@ public class BitfinexWatcher {
                 if (balancingStatusRepository.findById(1L).get().getBalancingStatus().equals(BalancingStatusEnum.IDLE)) {
                     return;
                 }
+                // walletList will contain only wallets with balance > 0
+                // if LNX or RBT balance is 0, then the wallet is not available and application will fail to start
                 var walletList = bitfinexClient.getWalletManager().getWallets();
                 var rbtWallet = walletList.stream()
                         .filter(wallet -> wallet.getWalletType().equals(BitfinexWallet.Type.EXCHANGE)
