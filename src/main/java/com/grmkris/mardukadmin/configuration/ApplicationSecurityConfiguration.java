@@ -25,7 +25,11 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.cors().disable().csrf().disable().authorizeRequests().antMatchers("/api/**").authenticated().and().httpBasic();
+
+        http.csrf().disable().authorizeRequests()
+                .antMatchers("/swagger-ui").permitAll()
+                .antMatchers("/api").authenticated().and().httpBasic()
+                .and().cors();
     }
 
     @Override
