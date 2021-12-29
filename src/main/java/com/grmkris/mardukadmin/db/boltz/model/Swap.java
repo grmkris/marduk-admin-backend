@@ -9,6 +9,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.time.LocalDateTime;
 
 @Entity(name = "swaps")
 @Data
@@ -48,4 +50,6 @@ public class Swap {
     private String lockupAddress;
     private String lockupTransactionId;
     private BigDecimal lockupTransactionVout;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

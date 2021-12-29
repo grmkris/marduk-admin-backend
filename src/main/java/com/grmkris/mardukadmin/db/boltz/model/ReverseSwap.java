@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity(name = "reverseSwaps")
 @Data
@@ -53,4 +54,6 @@ public class ReverseSwap {
     private String onchainAmount;
     private String transactionId;
     private BigDecimal transactionVout;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
