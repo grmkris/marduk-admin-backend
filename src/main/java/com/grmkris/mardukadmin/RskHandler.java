@@ -1,5 +1,6 @@
 package com.grmkris.mardukadmin;
 
+import com.grmkris.mardukadmin.api.Balance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +28,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static org.web3j.crypto.Bip32ECKeyPair.HARDENED_BIT;
@@ -50,6 +48,7 @@ public class RskHandler {
 
     private Web3j web3j;
     private Credentials credentials;
+    private final CovalentService covalentService;
 
     @PostConstruct
     void init() throws IOException {
@@ -65,6 +64,10 @@ public class RskHandler {
 
     public String getRskAddress() {
         return credentials.getAddress();
+    }
+
+    public List<Balance> getRskBalances() {
+        return covalentService.getBalancesForAddress(credentials.getAddress());
     }
 
     public TransactionReceipt sendToRskBtcBridge(BigDecimal amount) {

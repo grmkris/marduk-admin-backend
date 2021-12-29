@@ -50,9 +50,9 @@ public class AdminController {
         return lndHandler.getLightningBalanceReactive();
     }
 
-    @RequestMapping(value = "/api/admin/rbtc/balance", method = RequestMethod.GET)
-    public BigInteger getRskBalance() {
-        return rskHandler.getRskBalance();
+    @RequestMapping(value = "/api/admin/rsk/balance", method = RequestMethod.GET)
+    public List<Balance> getRskBalances() {
+        return rskHandler.getRskBalances();
     }
 
     @RequestMapping(value = "/api/admin/profit", method = RequestMethod.GET)

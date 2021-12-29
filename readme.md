@@ -2,6 +2,9 @@
 - https://github.com/grmkris/marduk-admin-frontend
 - https://github.com/grmkris/marduk-admin-backend
 
+## RSK balances
+- https://wiki.sovryn.app/en/technical-documents/mainnet-contract-addresses
+
 ## Swagger UI
 - https://localhost:18080/swagger-ui/
 - type: `thisisunsafe`
