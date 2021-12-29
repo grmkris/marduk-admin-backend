@@ -56,7 +56,7 @@ public class CovalentService {
             var balance = item.get("balance").asText();
             var token = item.get("contract_ticker_symbol").asText();
             var balanceBigDecimal = new BigDecimal(balance);
-            Balance balanceObject = new Balance(token, balanceBigDecimal.divide(new BigDecimal("1000000000000000000")));
+            Balance balanceObject = new Balance(token, balanceBigDecimal.divide(new BigDecimal("1000000000000000000")), address);
             returnData.add(balanceObject);
         });
         return returnData;

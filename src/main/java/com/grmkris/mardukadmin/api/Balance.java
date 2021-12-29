@@ -12,4 +12,5 @@ import java.math.BigDecimal;
 public class Balance {
     private String walletName;
     private BigDecimal value;
+    private String address;
 }
