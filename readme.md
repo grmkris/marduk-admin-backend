@@ -7,7 +7,6 @@
 
 
 ## TODO
-- timestamp for blockheight -> even better human readable date
 - 2fa authenticator
 - write operations (update balancer configuration, update&restart boltz??)
 - dockerization
