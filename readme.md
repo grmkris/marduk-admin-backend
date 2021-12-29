@@ -5,6 +5,16 @@
 ## RSK balances
 - https://wiki.sovryn.app/en/technical-documents/mainnet-contract-addresses
 
+
+## TODO
+- timestamp for blockheight -> even better human readable date
+- 2fa authenticator
+- write operations (update balancer configuration, update&restart boltz??)
+- dockerization
+- add more docs
+- add more tests
+
+
 ## Swagger UI
 - https://localhost:18080/swagger-ui/
 - type: `thisisunsafe`
@@ -102,10 +112,6 @@ lnd.loop.url=${LND_LOOP_URL}
 lnd.loop.admin.macaroon=${LND_LOOP_ADMIN_MACAROON}
 
 ```
-### TODO
-- monitor loop swap status and retry it if it fails with higher max fees
-- add information about swaps to database
-- use exchange API instead of RSK powpeg for faster balancing
 
 ## Helpful information
 ### RSK
