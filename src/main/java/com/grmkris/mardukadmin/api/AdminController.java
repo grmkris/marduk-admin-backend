@@ -45,10 +45,16 @@ public class AdminController {
         return reverseSwapRepository.findAll();
     }
 
-    @RequestMapping(value = "/api/admin/lnd/balance", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/admin/lnd/balance/offchain", method = RequestMethod.GET)
     public Mono<BigInteger> getLndBalance() {
         return lndHandler.getLightningBalanceReactive();
     }
+
+    @RequestMapping(value = "/api/admin/lnd/balance/onchain", method = RequestMethod.GET)
+    public BigInteger getLndBalanceOnchain() {
+        return lndHandler.getLightningOnChainBalance();
+    }
+
 
     @RequestMapping(value = "/api/admin/rsk/balance", method = RequestMethod.GET)
     public List<Balance> getRskBalances() {
