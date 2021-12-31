@@ -9,6 +9,7 @@ import com.grmkris.mardukadmin.db.boltz.model.Swap;
 import com.grmkris.mardukadmin.db.boltz.repository.ReverseSwapRepository;
 import com.grmkris.mardukadmin.db.boltz.repository.SwapRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -37,12 +38,12 @@ public class AdminController {
 
     @RequestMapping(value = "/api/admin/swaps", method = RequestMethod.GET)
     public List<Swap> getSwaps() {
-        return swapRepository.findAll();
+        return swapRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     @RequestMapping(value = "/api/admin/swaps/reverse", method = RequestMethod.GET)
     public List<ReverseSwap> getReverseSwaps() {
-        return reverseSwapRepository.findAll();
+        return reverseSwapRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     @RequestMapping(value = "/api/admin/lnd/balance/offchain", method = RequestMethod.GET)
